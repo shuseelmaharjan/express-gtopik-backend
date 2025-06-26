@@ -1,0 +1,10 @@
+######################3
+to run the gui xampp
+
+command: sudo /opt/lampp/manager-linux-x64.run
+
+##########################
+for cli command on linux
+for start: sudo systemctl start mysql
+for end: sudo systemctl stop mysql
+for restart: sudo systemctl restart mysql

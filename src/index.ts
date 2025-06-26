@@ -1,6 +1,15 @@
 import app from './app';
 import dotenv from 'dotenv';
-import connectDatabase from './config/database';
+import sequelize from './config/database';
+
+
+//Import database Objects
+import './models/User';
+import './models/Faculty';
+import './models/Courses';
+import './models/Shifts';
+import './models/Class';
+
 
 dotenv.config();
 
@@ -8,8 +17,12 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    await connectDatabase(); 
-    console.log('Connected to MySQL database');
+    await sequelize.authenticate();
+    console.log('Database connected');
+
+    await sequelize.sync({ force: true }); 
+
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
