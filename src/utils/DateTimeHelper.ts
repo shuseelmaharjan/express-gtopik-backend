@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-export class DateTimeHelper {
+class DateTimeHelper {
   private static timezone: string = process.env.TIMEZONE || 'UTC';
 
   /**
@@ -119,3 +119,5 @@ export class DateTimeHelper {
   }
 
 }
+
+export { DateTimeHelper };

@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { DateTimeHelper } from '../utils/DateTimeHelper';
+import {DateTimeHelper} from '../utils/DateTimeHelper';
 
 interface LoginCredentials {
   username: string;
@@ -25,7 +25,7 @@ interface LoginResponse {
   };
 }
 
-export class AuthService {
+class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const { username, password } = credentials;
@@ -55,7 +55,6 @@ export class AuthService {
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
 
-      console.log(`User login successful: ${user.username} at ${DateTimeHelper.getDateTime()}`);
       return {
         success: true,
         message: 'Login successful',
@@ -232,3 +231,5 @@ export class AuthService {
     }
   }
 }
+
+export default AuthService;
