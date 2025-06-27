@@ -1,6 +1,7 @@
 import app from './app';
 import dotenv from 'dotenv';
 import sequelize from './config/database';
+import { createSuperAdmin } from './utils/seedData';
 
 
 //Import database Objects
@@ -22,6 +23,8 @@ const startServer = async () => {
 
     await sequelize.sync({ force: true }); 
 
+    // Create superadmin user after database sync
+    await createSuperAdmin();
 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
