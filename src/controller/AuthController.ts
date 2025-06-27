@@ -9,12 +9,7 @@ export class AuthController {
    */
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      console.log(`Login attempt at ${DateTimeHelper.getDateTime()}`);
-      console.log('Request body:', req.body);
-      console.log('Content-Type:', req.headers['content-type']);
-      
-      // Check if request body exists and is valid
-      if (!req.body) {
+    if (!req.body) {
         console.log('Request body is missing or undefined');
         res.status(400).json({
           success: false,

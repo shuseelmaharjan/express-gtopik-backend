@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { DateTimeHelper } from '../utils/DateTimeHelper';
 
@@ -25,14 +26,9 @@ interface LoginResponse {
 }
 
 export class AuthService {
-  /**
-   * Authenticate user and generate tokens
-   */
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
       const { username, password } = credentials;
-
-      // Find user by username
       const user = await User.findOne({
         where: { username: username }
       });
@@ -43,16 +39,12 @@ export class AuthService {
           message: 'Invalid username or password'
         };
       }
-
-      // Check if user is active
       if (!user.isActive) {
         return {
           success: false,
           message: 'Account is deactivated. Please contact administrator.'
         };
       }
-
-      // Verify password
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return {
@@ -60,13 +52,10 @@ export class AuthService {
           message: 'Invalid username or password'
         };
       }
-
-      // Generate tokens (simplified for now)
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
 
       console.log(`User login successful: ${user.username} at ${DateTimeHelper.getDateTime()}`);
-
       return {
         success: true,
         message: 'Login successful',
@@ -94,65 +83,104 @@ export class AuthService {
   }
 
   /**
-   * Generate access token (simplified - replace with JWT later)
+   * Generate access token using JWT (3 hours expiry)
    */
   private static generateAccessToken(user: any): string {
-    // For now, return a simple token. Replace with JWT later
-    const tokenData = {
+    const payload = {
       id: user.id,
       username: user.username,
+      email: user.email,
       role: user.role,
-      exp: Date.now() + (3 * 60 * 60 * 1000) // 3 hours
+      name: user.name,
+      type: 'access'
     };
-    return Buffer.from(JSON.stringify(tokenData)).toString('base64');
+
+    const secret = process.env.JWT_ACCESS_SECRET;
+    if (!secret) {
+      throw new Error('JWT_ACCESS_SECRET is not defined in environment variables');
+    }
+
+    return jwt.sign(payload, secret, { 
+      expiresIn: '3h',
+      issuer: 'golden-server',
+      audience: 'golden-client'
+    });
   }
 
+
   /**
-   * Generate refresh token (simplified - replace with JWT later)
+   * Generate refresh token using JWT (15 days expiry)
    */
   private static generateRefreshToken(user: any): string {
-    // For now, return a simple token. Replace with JWT later
-    const tokenData = {
+    const payload = {
       id: user.id,
       username: user.username,
-      exp: Date.now() + (15 * 24 * 60 * 60 * 1000) // 15 days
+      type: 'refresh'
     };
-    return Buffer.from(JSON.stringify(tokenData)).toString('base64');
+
+    const secret = process.env.JWT_REFRESH_SECRET;
+    if (!secret) {
+      throw new Error('JWT_REFRESH_SECRET is not defined in environment variables');
+    }
+
+    return jwt.sign(payload, secret, { 
+      expiresIn: '15d',
+      issuer: 'golden-server',
+      audience: 'golden-client'
+    });
   }
 
   /**
-   * Verify access token (simplified version)
+   * Verify access token using JWT
    */
   static verifyAccessToken(token: string): any {
     try {
-      const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-      
-      // Check if token is expired
-      if (Date.now() > decoded.exp) {
-        throw new Error('Token expired');
+      const secret = process.env.JWT_ACCESS_SECRET;
+      if (!secret) {
+        throw new Error('JWT_ACCESS_SECRET is not defined in environment variables');
       }
-      
+
+      const decoded = jwt.verify(token, secret, {
+        issuer: 'golden-server',
+        audience: 'golden-client'
+      });
+
       return decoded;
     } catch (error) {
-      throw new Error('Invalid or expired access token');
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Access token has expired');
+      } else if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Invalid access token');
+      } else {
+        throw new Error('Access token verification failed');
+      }
     }
   }
 
   /**
-   * Verify refresh token (simplified version)
+   * Verify refresh token using JWT
    */
   static verifyRefreshToken(token: string): any {
     try {
-      const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-      
-      // Check if token is expired
-      if (Date.now() > decoded.exp) {
-        throw new Error('Token expired');
+      const secret = process.env.JWT_REFRESH_SECRET;
+      if (!secret) {
+        throw new Error('JWT_REFRESH_SECRET is not defined in environment variables');
       }
-      
+
+      const decoded = jwt.verify(token, secret, {
+        issuer: 'golden-server',
+        audience: 'golden-client'
+      });
+
       return decoded;
     } catch (error) {
-      throw new Error('Invalid or expired refresh token');
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Refresh token has expired');
+      } else if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Invalid refresh token');
+      } else {
+        throw new Error('Refresh token verification failed');
+      }
     }
   }
 

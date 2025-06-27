@@ -28,7 +28,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.connection.remoteAddress;
   
   // Log all requests with method, URL, and IP
-  console.log(`[${timestamp}] ${method} ${url} - IP: ${ip}`);
+  console.log(`[${timestamp}] ${url} - IP: ${ip}`);
   
   // Log request body for requests that typically have body data (excluding sensitive data)
   if (['POST', 'PUT', 'PATCH'].includes(method) && Object.keys(req.body).length > 0) {
@@ -37,7 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     if (body.password) {
       body.password = '***hidden***';
     }
-    console.log(`[${timestamp}] Request Body:`, JSON.stringify(body, null, 2));
+    // console.log(`[${timestamp}] Request Body:`, JSON.stringify(body, null, 2));
   }
   
   // Log query parameters for GET requests if they exist
