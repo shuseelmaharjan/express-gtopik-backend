@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User';
-import { DateTimeHelper } from './DateTimeHelper';
+import {DateTimeHelper}  from './DateTimeHelper';
 
 export const createSuperAdmin = async (): Promise<void> => {
   try {
