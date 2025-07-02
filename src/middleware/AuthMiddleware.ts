@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from '../service/AuthService';
+import  {AuthService}  from '../service/AuthService';
 
 declare global {
   namespace Express {

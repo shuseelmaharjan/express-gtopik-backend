@@ -21,10 +21,9 @@ interface LoginResponse {
       isActive: boolean;
     };
     accessToken: string;
-    refreshToken: string;
   };
+  refreshToken?: string;
 }
-
 export class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
@@ -55,7 +54,7 @@ export class AuthService {
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
 
-      console.log(`User login successful: ${user.username} at ${DateTimeHelper.getDateTime()}`);
+      // console.log(`User login successful: ${user.username} at ${DateTimeHelper.getDateTime()}`);
       return {
         success: true,
         message: 'Login successful',
@@ -68,9 +67,9 @@ export class AuthService {
             role: user.role,
             isActive: user.isActive
           },
-          accessToken,
-          refreshToken
-        }
+          accessToken
+        },
+        refreshToken 
       };
 
     } catch (error) {
@@ -189,10 +188,7 @@ export class AuthService {
    */
   static async refreshAccessToken(refreshToken: string): Promise<LoginResponse> {
     try {
-      // Verify refresh token
       const decoded = this.verifyRefreshToken(refreshToken);
-
-      // Find user
       const user = await User.findByPk(decoded.id);
       if (!user || !user.isActive) {
         return {
@@ -200,11 +196,9 @@ export class AuthService {
           message: 'User not found or inactive'
         };
       }
-
-      // Generate new access token
       const newAccessToken = this.generateAccessToken(user);
 
-      console.log(`Token refreshed for user: ${user.username} at ${DateTimeHelper.getDateTime()}`);
+      // console.log(`Token refreshed for user: ${user.username} at ${DateTimeHelper.getDateTime()}`);
 
       return {
         success: true,
@@ -218,9 +212,9 @@ export class AuthService {
             role: user.role,
             isActive: user.isActive
           },
-          accessToken: newAccessToken,
-          refreshToken: refreshToken // Return the same refresh token
-        }
+          accessToken: newAccessToken
+        },
+        refreshToken: refreshToken
       };
 
     } catch (error) {
@@ -231,4 +225,33 @@ export class AuthService {
       };
     }
   }
+
+  /**
+   * Logout user (invalidate tokens)
+   */
+  static async logout(): Promise<{ success: boolean; message: string }> {
+    try {
+      console.log(`User logout at ${DateTimeHelper.getDateTime()}`);
+      
+      // In the future, you can implement token blacklisting here
+      // For now, we'll just return success as the cookie will be cleared on client side
+      // Possible enhancements:
+      // 1. Add token to blacklist in database
+      // 2. Store active sessions in Redis
+      // 3. Add logout timestamp to user record
+      
+      return {
+        success: true,
+        message: 'Logged out successfully'
+      };
+
+    } catch (error) {
+      console.error('Logout service error:', error);
+      return {
+        success: false,
+        message: 'Logout failed. Please try again.'
+      };
+    }
+  }
 }
+
