@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import {AuthService} from '../service/AuthService';
+import { AuthService } from '../service/AuthService';
 
 export class AuthController {
   static async login(req: Request, res: Response): Promise<void> {
     try {
-    if (!req.body) {
+      if (!req.body) {
         console.log('Request body is missing or undefined');
         res.status(400).json({
           success: false,
@@ -22,30 +22,38 @@ export class AuthController {
         return;
       }
 
-      const { username, password } = req.body;
-      if (!username || !password || 
-          typeof username !== 'string' || typeof password !== 'string' ||
-          username.trim() === '' || password.trim() === '') {
-        // console.log('Validation failed - username or password invalid');
+      const { identifier, password } = req.body;
+      if (
+        !identifier || !password ||
+        typeof identifier !== "string" || typeof password !== "string" ||
+        identifier.trim() === "" || password.trim() === ""
+      ) {
         res.status(400).json({
           success: false,
-          message: 'Username and password are required.'
+          message: 'Username/email and password are required.'
         });
         return;
       }
-      const result = await AuthService.login({ 
-        username: username.trim(), 
-        password: password.trim() 
+      const result = await AuthService.login({
+        identifier: identifier.trim(),
+        password: password.trim()
       });
 
       if (result.success && result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 15 * 24 * 60 * 60 * 1000, 
+          sameSite: 'lax',
+          maxAge: 15 * 24 * 60 * 60 * 1000,
           path: '/'
         });
+        res.cookie("session", true,{
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 15 * 24 * 60 * 60 * 1000,
+          path: '/'
+        } )
 
         const { refreshToken, ...responseWithoutRefreshToken } = result;
         const statusCode = result.success ? 200 : 401;
@@ -66,7 +74,7 @@ export class AuthController {
 
   static async refreshToken(req: Request, res: Response): Promise<void> {
     // console.log("Cookie received:", req.cookies);
-    try {      
+    try {
       const refreshToken = req.cookies?.refreshToken;
       // console.log('Received refresh token:', refreshToken);
 
@@ -79,13 +87,13 @@ export class AuthController {
       }
 
       const result = await AuthService.refreshAccessToken(refreshToken.trim());
-      
+
       if (result.success && result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          maxAge: 15 * 24 * 60 * 60 * 1000, 
+          sameSite: 'lax',
+          maxAge: 15 * 24 * 60 * 60 * 1000,
           path: '/'
         });
 
@@ -109,14 +117,14 @@ export class AuthController {
   static async logout(req: Request, res: Response): Promise<void> {
     try {
       console.log('Logout attempt received');
-      
+
       const result = await AuthService.logout();
-      
+
       if (result.success) {
         res.clearCookie('refreshToken', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax',
           path: '/'
         });
 
