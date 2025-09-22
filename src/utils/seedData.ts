@@ -32,6 +32,7 @@ export const createSuperAdmin = async (): Promise<void> => {
       password: hashedPassword,
       role: 'superadmin',
       dateofjoin: joinDate,
+      sex:'male',
       isActive: true
     });
 

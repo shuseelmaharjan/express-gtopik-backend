@@ -4,12 +4,8 @@ import sequelize from './config/database';
 import { createSuperAdmin } from './utils/seedData';
 
 
-//Import database Objects
-import './models/User';
-import './models/Faculty';
-import './models/Courses';
-import './models/Shifts';
-import './models/Class';
+//Import database Objects and set up associations
+import './models/associations';
 
 
 dotenv.config();
@@ -21,7 +17,16 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('Database connected');
 
-    await sequelize.sync({ force: true }); 
+    // Sync database safely:
+    // - Creates tables if they don't exist
+    // - Does NOT drop existing tables or data
+    // - Use 'alter: true' only in development to update table structure
+    await sequelize.sync({ 
+      force: false,  // Never drop tables
+      alter: false   // Set to true only in development to update table structure
+    });
+
+    console.log('Database synchronized successfully');
 
     // Create superadmin user after database sync
     await createSuperAdmin();

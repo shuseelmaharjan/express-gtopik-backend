@@ -55,9 +55,15 @@ app.get('/', (req, res) => {
 
 // Import routes
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import facultyRoutes from './routes/facultyRoutes';
+import departmentRoutes from './routes/departmentRoutes';
 
 
 // Authentication routes
 app.use('/api/auth', authRoutes);
+app.use('/api', userRoutes);
+app.use('/api', facultyRoutes);
+app.use('/api', departmentRoutes);
 
 export default app;
