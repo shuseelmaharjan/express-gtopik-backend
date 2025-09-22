@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../service/AuthService';
-import { DateTimeHelper } from '../utils/DateTimeHelper';
+import {AuthService} from '../service/AuthService';
 
 export class AuthController {
   /**
@@ -9,8 +8,8 @@ export class AuthController {
    */
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      if (!req.body) {
-        console.log("Request body is missing or undefined");
+    if (!req.body) {
+        console.log('Request body is missing or undefined');
         res.status(400).json({
           success: false,
           message:
@@ -29,33 +28,37 @@ export class AuthController {
       }
 
       const { username, password } = req.body;
-      console.log('Extracted fields - username:', username, 'password:', password ? '[PROVIDED]' : '[MISSING]');
-
-      // Validate input - check for empty strings, null, undefined
       if (!username || !password || 
           typeof username !== 'string' || typeof password !== 'string' ||
           username.trim() === '' || password.trim() === '') {
-        console.log('Validation failed - username or password invalid');
+        // console.log('Validation failed - username or password invalid');
         res.status(400).json({
           success: false,
-          message: 'Username and password are required and must be non-empty strings'
+          message: 'Username and password are required.'
         });
         return;
       }
-
-      console.log('Input validation passed, calling AuthService');
-
-      // Call authentication service
       const result = await AuthService.login({ 
-        username: username.trim(), 
+        identifier: username.trim(), 
         password: password.trim() 
       });
 
-      // Set appropriate status code based on result
-      const statusCode = result.success ? 200 : 401;
-      
-      res.status(statusCode).json(result);
+      if (result.success && result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 15 * 24 * 60 * 60 * 1000, 
+          path: '/'
+        });
 
+        const { refreshToken, ...responseWithoutRefreshToken } = result;
+        const statusCode = result.success ? 200 : 401;
+        res.status(statusCode).json(responseWithoutRefreshToken);
+      } else {
+        const statusCode = result.success ? 200 : 401;
+        res.status(statusCode).json(result);
+      }
     } catch (error) {
       console.error("Login controller error:", error);
       console.error("Error stack:", (error as Error).stack);
@@ -71,21 +74,11 @@ export class AuthController {
    * POST /api/auth/refresh
    */
   static async refreshToken(req: Request, res: Response): Promise<void> {
-    try {
-      console.log(`Token refresh attempt at ${DateTimeHelper.getDateTime()}`);
-      
-      // Check if request body exists
-      if (!req.body || typeof req.body !== 'object') {
-        res.status(400).json({
-          success: false,
-          message: 'Invalid request data. Refresh token is required'
-        });
-        return;
-      }
+    // console.log("Cookie received:", req.cookies);
+    try {      
+      const refreshToken = req.cookies?.refreshToken;
+      // console.log('Received refresh token:', refreshToken);
 
-      const { refreshToken } = req.body;
-
-      // Validate input
       if (!refreshToken || typeof refreshToken !== 'string' || refreshToken.trim() === '') {
         res.status(400).json({
           success: false,
@@ -96,11 +89,23 @@ export class AuthController {
 
       // Call authentication service
       const result = await AuthService.refreshAccessToken(refreshToken.trim());
-
-      // Set appropriate status code based on result
-      const statusCode = result.success ? 200 : 401;
       
-      res.status(statusCode).json(result);
+      if (result.success && result.refreshToken) {
+        res.cookie('refreshToken', result.refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 15 * 24 * 60 * 60 * 1000, 
+          path: '/'
+        });
+
+        const { refreshToken: _, ...responseWithoutRefreshToken } = result;
+        const statusCode = result.success ? 200 : 401;
+        res.status(statusCode).json(responseWithoutRefreshToken);
+      } else {
+        const statusCode = result.success ? 200 : 401;
+        res.status(statusCode).json(result);
+      }
 
     } catch (error) {
       console.error("Token refresh controller error:", error);
@@ -113,14 +118,22 @@ export class AuthController {
 
   static async logout(req: Request, res: Response): Promise<void> {
     try {
-      console.log(`Logout attempt at ${DateTimeHelper.getDateTime()}`);
+      console.log('Logout attempt received');
       
-      // For now, just return success
-      // In future, you can implement token blacklisting here
-      res.status(200).json({
-        success: true,
-        message: 'Logged out successfully'
-      });
+      const result = await AuthService.logout();
+      
+      if (result.success) {
+        res.clearCookie('refreshToken', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/'
+        });
+
+        console.log('Refresh token cookie cleared');
+      }
+      const statusCode = result.success ? 200 : 500;
+      res.status(statusCode).json(result);
 
     } catch (error) {
       console.error("Logout controller error:", error);

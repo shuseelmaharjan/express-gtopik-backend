@@ -35,7 +35,7 @@ export class AuthMiddleware {
       next();
 
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.log('Token verification error:', error);
       res.status(403).json({
         success: false,
         message: 'Invalid or expired access token'

@@ -1,10 +1,9 @@
 import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
-import {DateTimeHelper} from '../utils/DateTimeHelper';
 
 interface LoginCredentials {
-  username: string;
+  identifier: string;
   password: string;
 }
 
@@ -27,30 +26,35 @@ interface LoginResponse {
 export class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      const { username, password } = credentials;
+      const { identifier, password } = credentials;
+
+      // Try username first, then email
       const user = await User.findOne({
-        where: { username: username }
+       
       });
 
       if (!user) {
         return {
           success: false,
-          message: 'Invalid username or password'
+          message: 'Invalid username/email or password'
         };
       }
+
       if (!user.isActive) {
         return {
           success: false,
           message: 'Account is deactivated. Please contact administrator.'
         };
       }
+
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return {
           success: false,
-          message: 'Invalid username or password'
+          message: 'Invalid username/email or password'
         };
       }
+
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
       return {
@@ -67,7 +71,7 @@ export class AuthService {
           },
           accessToken
         },
-        refreshToken 
+        refreshToken
       };
 
     } catch (error) {
@@ -78,7 +82,6 @@ export class AuthService {
       };
     }
   }
-
   /**
    * Generate access token using JWT (3 hours expiry)
    */
@@ -97,7 +100,7 @@ export class AuthService {
       throw new Error('JWT_ACCESS_SECRET is not defined in environment variables');
     }
 
-    return jwt.sign(payload, secret, { 
+    return jwt.sign(payload, secret, {
       expiresIn: '3h',
       issuer: 'golden-server',
       audience: 'golden-client'
@@ -120,7 +123,7 @@ export class AuthService {
       throw new Error('JWT_REFRESH_SECRET is not defined in environment variables');
     }
 
-    return jwt.sign(payload, secret, { 
+    return jwt.sign(payload, secret, {
       expiresIn: '15d',
       issuer: 'golden-server',
       audience: 'golden-client'
@@ -229,15 +232,14 @@ export class AuthService {
    */
   static async logout(): Promise<{ success: boolean; message: string }> {
     try {
-      console.log(`User logout at ${DateTimeHelper.getDateTime()}`);
-      
+
       // In the future, you can implement token blacklisting here
       // For now, we'll just return success as the cookie will be cleared on client side
       // Possible enhancements:
       // 1. Add token to blacklist in database
       // 2. Store active sessions in Redis
       // 3. Add logout timestamp to user record
-      
+
       return {
         success: true,
         message: 'Logged out successfully'

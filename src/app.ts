@@ -1,8 +1,20 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import { DateTimeHelper } from './utils/DateTimeHelper';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app: Application = express();
+
+// CORS middleware for allowing access from localhost:3000
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
+
+console.log('CORS enabled for origin:', process.env.CLIENT_URL);
 
 // JSON parsing with error handling
 app.use(express.json({ limit: '10mb' }));
@@ -43,9 +55,15 @@ app.get('/', (req, res) => {
 
 // Import routes
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import facultyRoutes from './routes/facultyRoutes';
+import departmentRoutes from './routes/departmentRoutes';
 
 
 // Authentication routes
 app.use('/api/auth', authRoutes);
+app.use('/api', userRoutes);
+app.use('/api', facultyRoutes);
+app.use('/api', departmentRoutes);
 
 export default app;

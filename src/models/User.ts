@@ -6,7 +6,8 @@ interface UserAttributes {
     name: string;
     email: string;
     password: string;
-    role: 'superadmin' | 'admin' | 'staff' | 'teacher' | 'student';
+    role: 'superadmin' | 'admin' | 'staff' | 'teacher' | 'student' | 'accountant';
+    sex: 'male' | 'female' | 'other';
     username: string;
     profile?: string;
     fatherName?: string;
@@ -33,6 +34,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     public username!: string;
 
     public role!: 'superadmin' | 'admin' | 'staff' | 'teacher' | 'student';
+    public sex!: 'male' | 'female' | 'other';
     public profile?: string;
     public fatherName?: string;
     public motherName?: string;
@@ -69,6 +71,10 @@ User.init(
         },
         role: {
             type: DataTypes.ENUM('superadmin', 'admin', 'staff', 'teacher', 'student'),
+            allowNull: false,
+        },
+        sex: {
+            type: DataTypes.ENUM('male', 'female', 'other'),
             allowNull: false,
         },
         username: {

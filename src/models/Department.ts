@@ -1,21 +1,23 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-interface FacultyAttributes {
+interface DepartmentAttributes {
     id: number;
-    facultyName: string;
+    facultyId: number;
+    departmentName: string;
     createdAt: Date;
     createdBy: string;
     updatedAt: Date;
-    updatedBy: string;
+    updatedBy: string
     isActive: boolean;
 }
 
-type FacultyCreationAttributes = Optional<FacultyAttributes, 'id' | 'createdAt' | 'updatedAt'>;
+type DepartmentCreationAttributes = Optional<DepartmentAttributes, 'id' | 'createdAt' | 'updatedAt'>;
 
-class Faculty extends Model<FacultyAttributes, FacultyCreationAttributes> implements FacultyAttributes {
+class Department extends Model<DepartmentAttributes, DepartmentCreationAttributes> implements DepartmentAttributes {
     public id!: number;
-    public facultyName!: string;
+    public facultyId!: number;
+    public departmentName!: string;
     public createdAt!: Date;
     public createdBy!: string;
     public updatedBy!: string;
@@ -24,21 +26,25 @@ class Faculty extends Model<FacultyAttributes, FacultyCreationAttributes> implem
 
     // Association method
     static associate(models: any) {
-        Faculty.hasMany(models.Department, {
+        Department.belongsTo(models.Faculty, {
             foreignKey: 'facultyId',
-            as: 'departments'
+            as: 'faculty'
         });
     }
 }
 
-Faculty.init(
+Department.init(
     {
         id: {
             type: DataTypes.INTEGER.UNSIGNED,
             autoIncrement: true,
             primaryKey: true,
         },
-        facultyName: {
+        facultyId: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: false,
+        },
+        departmentName: {
             type: DataTypes.STRING(255),
             allowNull: false,
         },
@@ -68,9 +74,9 @@ Faculty.init(
     },
     {
         sequelize,
-        tableName: 'tbl_faculties',
+        tableName: 'tbl_departments',
         timestamps: false, 
     }
 );
 
-export default Faculty;
+export default Department;
