@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../service/AuthService';
+import UidHelper from '../utils/uidHelper';
 
 export class AuthController {
   static async login(req: Request, res: Response): Promise<void> {
@@ -37,7 +38,7 @@ export class AuthController {
       const result = await AuthService.login({
         identifier: identifier.trim(),
         password: password.trim()
-      });
+      }, req);
 
       if (result.success && result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {
@@ -135,6 +136,76 @@ export class AuthController {
 
     } catch (error) {
       console.error('Logout controller error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  static async changePassword(req: Request, res: Response): Promise<void> {
+    try {
+      // Get access token from authorization header
+      const accessToken = req.headers.authorization?.split(' ')[1];
+      if (!accessToken) {
+        res.status(401).json({
+          success: false,
+          message: 'No access token provided'
+        });
+        return;
+      }
+
+      // Extract user ID from token
+      const userId = UidHelper.extractUserIdFromToken(accessToken);
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid access token'
+        });
+        return;
+      }
+
+      // Validate request body
+      if (!req.body) {
+        res.status(400).json({
+          success: false,
+          message: 'Request body is required'
+        });
+        return;
+      }
+
+      const { currentPassword, newPassword, confirmPassword } = req.body;
+      
+      // Validate required fields
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        res.status(400).json({
+          success: false,
+          message: 'Current password, new password, and confirm password are required'
+        });
+        return;
+      }
+
+      // Validate data types
+      if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || typeof confirmPassword !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'All password fields must be strings'
+        });
+        return;
+      }
+
+      // Call service method
+      const result = await AuthService.changePassword(parseInt(userId), {
+        currentPassword: currentPassword.trim(),
+        newPassword: newPassword.trim(),
+        confirmPassword: confirmPassword.trim()
+      });
+
+      const statusCode = result.success ? 200 : 400;
+      res.status(statusCode).json(result);
+
+    } catch (error) {
+      console.error('Change password controller error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'

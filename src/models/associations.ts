@@ -4,6 +4,7 @@ import User from './User';
 import Courses from './Courses';
 import Shifts from './Shifts';
 import Class from './Class';
+import UserSession from './UserSession';
 
 // Faculty - Department associations
 Faculty.hasMany(Department, {
@@ -14,6 +15,17 @@ Faculty.hasMany(Department, {
 Department.belongsTo(Faculty, {
   foreignKey: 'facultyId',
   as: 'faculty'
+});
+
+// User - UserSession associations
+User.hasMany(UserSession, {
+  foreignKey: 'userId',
+  as: 'sessions'
+});
+
+UserSession.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
 });
 
 // You can add more associations here as needed
@@ -27,5 +39,6 @@ export {
   User,
   Courses,
   Shifts,
-  Class
+  Class,
+  UserSession
 };

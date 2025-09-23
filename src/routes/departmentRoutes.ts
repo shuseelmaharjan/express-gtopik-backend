@@ -12,7 +12,7 @@ router.get(
 
 // Get department by ID - requires admin/superadmin role
 router.get(
-    '/v1/departments:id', 
+    '/v1/:id', 
     DepartmentController.getDepartmentById
 );
 
@@ -26,7 +26,7 @@ router.post(
 
 // Update department name - requires admin/superadmin role
 router.put(
-    '/api/v1/update-department-name/departments:id',
+    '/v1/department/:id/update',
     AuthMiddleware.authenticateToken, 
     AuthMiddleware.requireAdmin, 
     DepartmentController.updateDepartmentName
@@ -34,7 +34,7 @@ router.put(
 
 // Update department status (activate/deactivate) - requires admin/superadmin role
 router.put(
-    '/v1/departments:id/status', 
+    '/v1/:id/status', 
     AuthMiddleware.authenticateToken, 
     AuthMiddleware.requireAdmin, 
     DepartmentController.updateDepartmentStatus

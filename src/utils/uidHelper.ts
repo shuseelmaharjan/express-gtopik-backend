@@ -27,6 +27,22 @@ class UidHelper {
 
       if (!token) return null;
 
+      return this.extractUserIdFromToken(token);
+    } catch (error) {
+      console.log('Token verification error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extract userId directly from access token
+   * @param token - The JWT access token
+   * @returns userId string or null if token is invalid
+   */
+  static extractUserIdFromToken(token: string): string | null {
+    try {
+      if (!token) return null;
+
       // Get JWT secret from environment variable
       const secret = process.env.JWT_ACCESS_SECRET;
       if (!secret) {
