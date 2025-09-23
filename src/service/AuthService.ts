@@ -1,10 +1,19 @@
 import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { DateTimeHelper } from '../utils/DateTimeHelper';
+import { Op } from "sequelize";
+import { SessionService } from './SessionService';
 
 interface LoginCredentials {
   identifier: string;
   password: string;
+}
+
+interface ChangePasswordCredentials {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 interface LoginResponse {
@@ -20,17 +29,32 @@ interface LoginResponse {
       isActive: boolean;
     };
     accessToken: string;
+    sessionInfo?: {
+      sessionId: string;
+      deviceInfo: string;
+      browserInfo: string;
+    };
   };
   refreshToken?: string;
 }
+
+interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
 export class AuthService {
-  static async login(credentials: LoginCredentials): Promise<LoginResponse> {
+  static async login(credentials: LoginCredentials, request?: any): Promise<LoginResponse> {
     try {
       const { identifier, password } = credentials;
 
       // Try username first, then email
       const user = await User.findOne({
-       
+        where: {
+          [Op.or]: [
+            { username: identifier },
+            { email: identifier }
+          ]
+        }
       });
 
       if (!user) {
@@ -57,6 +81,28 @@ export class AuthService {
 
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
+
+      // Create session record if request object is provided
+      let sessionInfo;
+      if (request) {
+        try {
+          const session = await SessionService.createSession(
+            user.id,
+            accessToken,
+            request,
+            refreshToken
+          );
+          sessionInfo = {
+            sessionId: session.sessionId,
+            deviceInfo: session.deviceInfo,
+            browserInfo: session.browserInfo
+          };
+        } catch (sessionError) {
+          console.error('Failed to create session:', sessionError);
+          // Continue with login even if session creation fails
+        }
+      }
+
       return {
         success: true,
         message: 'Login successful',
@@ -69,7 +115,8 @@ export class AuthService {
             role: user.role,
             isActive: user.isActive
           },
-          accessToken
+          accessToken,
+          sessionInfo
         },
         refreshToken
       };
@@ -228,10 +275,91 @@ export class AuthService {
   }
 
   /**
+   * Change user password
+   */
+  static async changePassword(userId: number, credentials: ChangePasswordCredentials): Promise<ChangePasswordResponse> {
+    try {
+      const { currentPassword, newPassword, confirmPassword } = credentials;
+
+      // Validate input
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return {
+          success: false,
+          message: 'All password fields are required'
+        };
+      }
+
+      if (newPassword !== confirmPassword) {
+        return {
+          success: false,
+          message: 'New password and confirm password do not match'
+        };
+      }
+
+      if (newPassword.length < 6) {
+        return {
+          success: false,
+          message: 'New password must be at least 6 characters long'
+        };
+      }
+
+      if (currentPassword === newPassword) {
+        return {
+          success: false,
+          message: 'New password must be different from current password'
+        };
+      }
+
+      // Find user
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return {
+          success: false,
+          message: 'User not found'
+        };
+      }
+
+      // Verify current password
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isCurrentPasswordValid) {
+        return {
+          success: false,
+          message: 'Current password is incorrect'
+        };
+      }
+
+      // Hash new password
+      const saltRounds = 12;
+      const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+      // Update password in database
+      await User.update(
+        { password: hashedNewPassword },
+        { where: { id: userId } }
+      );
+
+      console.log(`Password changed for user ID: ${userId} at ${DateTimeHelper.getDateTime()}`);
+
+      return {
+        success: true,
+        message: 'Password changed successfully'
+      };
+
+    } catch (error) {
+      console.error('Change password error:', error);
+      return {
+        success: false,
+        message: 'Failed to change password. Please try again.'
+      };
+    }
+  }
+
+  /**
    * Logout user (invalidate tokens)
    */
   static async logout(): Promise<{ success: boolean; message: string }> {
     try {
+      console.log(`User logout at ${DateTimeHelper.getDateTime()}`);
 
       // In the future, you can implement token blacklisting here
       // For now, we'll just return success as the cookie will be cleared on client side

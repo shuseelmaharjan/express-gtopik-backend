@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import  {AuthService}  from '../service/AuthService';
+import { SessionService } from '../service/SessionService';
 
 declare global {
   namespace Express {
     interface Request {
       user?: any;
+      session?: any;
     }
   }
 }
@@ -13,7 +15,7 @@ export class AuthMiddleware {
   /**
    * Middleware to verify JWT token and authenticate user
    */
-  static authenticateToken(req: Request, res: Response, next: NextFunction): void {
+  static async authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       // Get token from Authorization header
       const authHeader = req.headers['authorization'];
@@ -30,8 +32,20 @@ export class AuthMiddleware {
       // Verify token using AuthService
       const decoded = AuthService.verifyAccessToken(token);
       
-      // Add user info to request object
+      // Validate session in database - CRITICAL: Check if session is still active
+      const session = await SessionService.getSessionByToken(token);
+      
+      if (!session || !session.isActive) {
+        res.status(401).json({
+          success: false,
+          message: 'Session has been revoked or expired. Please login again.'
+        });
+        return;
+      }
+
+      // Add user info and session to request object
       req.user = decoded;
+      req.session = session;
       next();
 
     } catch (error) {
