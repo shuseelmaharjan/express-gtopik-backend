@@ -26,7 +26,8 @@ export const createSuperAdmin = async (): Promise<void> => {
 
     // Create superadmin user
     await User.create({
-      name: 'System Administrator',
+      firstName: 'System',
+      lastName: 'Administrator',
       email: 'admin@system.com',
       username: 'admin',
       password: hashedPassword,

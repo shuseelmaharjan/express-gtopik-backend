@@ -28,6 +28,7 @@ interface LoginResponse {
       name: string;
       role: string;
       isActive: boolean;
+      profilePicture?: string;
     };
     accessToken: string;
     sessionInfo?: {
@@ -112,9 +113,10 @@ export class AuthService {
             id: user.id,
             username: user.username,
             email: user.email,
-            name: user.name,
+            name: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' '),
             role: user.role,
-            isActive: user.isActive
+            isActive: user.isActive,
+            profilePicture: user.profilePicture
           },
           accessToken,
           sessionInfo
@@ -266,9 +268,10 @@ export class AuthService {
             id: user.id,
             username: user.username,
             email: user.email,
-            name: user.name,
+            name: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' '),
             role: user.role,
-            isActive: user.isActive
+            isActive: user.isActive,
+            profilePicture: user.profilePicture
           },
           accessToken: newAccessToken
         },

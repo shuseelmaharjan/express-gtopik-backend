@@ -1,6 +1,7 @@
 import UserSession from '../models/UserSession';
 import User from '../models/User';
 import { Op } from 'sequelize';
+import sequelize from '../config/database';
 
 export class SessionService {
     // Generate simple UUID alternative
@@ -92,14 +93,42 @@ export class SessionService {
     }
 
     // Update last activity for a session
-    static async updateLastActivity(sessionId: string) {
-        try {
-            await UserSession.update(
-                { lastActivity: new Date() },
-                { where: { sessionId, isActive: true } }
-            );
-        } catch (error) {
-            console.error('Error updating last activity:', error);
+    static async updateLastActivity(sessionId: string, throttleSeconds: number = 15) {
+        // Throttle updates: only update if lastActivity older than throttleSeconds
+        // Also add retry logic for lock wait timeouts.
+        const maxRetries = 3;
+        let attempt = 0;
+        while (attempt < maxRetries) {
+            try {
+                // Use raw query to leverage conditional update; LIMIT 1 to reduce locking window
+                const [result]: any = await sequelize.query(
+                    `UPDATE tbl_user_sessions 
+                     SET lastActivity = NOW(), updatedAt = NOW() 
+                     WHERE sessionId = :sessionId 
+                       AND isActive = 1 
+                       AND (lastActivity IS NULL OR lastActivity < (NOW() - INTERVAL :throttle SECOND))
+                     LIMIT 1`,
+                    {
+                        replacements: { sessionId, throttle: throttleSeconds },
+                        logging: false
+                    }
+                );
+                // If update executed (even if 0 rows affected) exit loop.
+                break;
+            } catch (error: any) {
+                if (error?.original?.code === 'ER_LOCK_WAIT_TIMEOUT' || error?.parent?.code === 'ER_LOCK_WAIT_TIMEOUT') {
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        console.warn(`Skipped lastActivity update after lock timeouts for session ${sessionId}`);
+                        break;
+                    }
+                    // Backoff before retry
+                    await new Promise(res => setTimeout(res, 50 * attempt));
+                    continue;
+                }
+                console.error('Error updating last activity:', error);
+                break; // Non-lock error; do not retry further
+            }
         }
     }
 
@@ -241,20 +270,58 @@ export class SessionService {
     // Get session by access token
     static async getSessionByToken(accessToken: string) {
         try {
+            const perfEnabled = process.env.PERF_LOG === '1';
+            let startAll: [number, number] | null = null;
+            let startQuery: [number, number] | null = null;
+            if (perfEnabled) {
+                startAll = process.hrtime();
+                startQuery = process.hrtime();
+            }
             const session = await UserSession.findOne({
                 where: { accessToken, isActive: true },
                 include: [{
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'name', 'email', 'role']
+                    attributes: [
+                        'id',
+                        'firstName',
+                        'middleName',
+                        'lastName',
+                        'email',
+                        'username',
+                        'role',
+                        'status',
+                        'isActive',
+                        'profilePicture'
+                    ]
                 }]
             });
-
-            if (session) {
-                await this.updateLastActivity(session.sessionId);
+            if (perfEnabled && startQuery) {
+                const diff = process.hrtime(startQuery);
+                const queryMs = diff[0] * 1000 + diff[1] / 1e6;
+                console.log(`[PERF][SessionService.getSessionByToken] DB query took ${queryMs.toFixed(2)} ms`);
             }
 
-            return session;
+            if (!session) return null;
+
+            // Fire & forget lastActivity update to avoid blocking request latency
+            // (still internally throttled). Errors are swallowed but logged inside method.
+            this.updateLastActivity(session.sessionId).catch(() => {/* noop */});
+
+            // Convert to plain object for safer downstream usage
+            const plain = session.get({ plain: true }) as any;
+            if (plain.user) {
+                const u = plain.user;
+                u.fullName = [u.firstName, u.middleName, u.lastName].filter(Boolean).join(' ');
+                // Backward compatibility for any code expecting user.name
+                if (!u.name) u.name = u.fullName;
+            }
+            if (perfEnabled && startAll) {
+                const diffAll = process.hrtime(startAll);
+                const totalMs = diffAll[0] * 1000 + diffAll[1] / 1e6;
+                console.log(`[PERF][SessionService.getSessionByToken] total time ${totalMs.toFixed(2)} ms`);
+            }
+            return plain;
         } catch (error) {
             console.error('Error getting session by token:', error);
             return null;

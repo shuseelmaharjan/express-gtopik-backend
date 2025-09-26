@@ -1,4 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
+import fileUpload from 'express-fileupload';
+import path from 'path';
 import { DateTimeHelper } from './utils/DateTimeHelper';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -18,6 +20,14 @@ console.log('CORS enabled for origin:', process.env.CLIENT_URL);
 
 // JSON parsing with error handling
 app.use(express.json({ limit: '10mb' }));
+
+// File upload middleware (5MB limit, use temp files false -> memory; can adjust if needed)
+app.use(fileUpload({
+  limits: { fileSize: 5 * 1024 * 1024 },
+  abortOnLimit: true,
+  useTempFiles: false,
+  createParentPath: true
+}));
 
 // Error handler for JSON parsing errors
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
@@ -51,6 +61,10 @@ app.use(cookieParser());
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
+
+// Serve uploaded profile images statically
+const uploadDir = path.join(__dirname, 'uploads');
+app.use('/uploads', express.static(uploadDir));
 
 
 // Import routes

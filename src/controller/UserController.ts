@@ -55,4 +55,44 @@ export class UserController{
             });
         }
     }
+
+    // Create user
+    static async createUser(req: Request, res: Response) {
+        try {
+            const created = await UserService.createUser(req.body);
+            res.status(201).json({ success: true, message: 'User created successfully', data: created });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message || 'Failed to create user' });
+        }
+    }
+
+    // Read full user by id
+    static async getUserById(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const user = await UserService.getUserByIdFull(id);
+            if (!user) {
+                res.status(404).json({ success: false, message: 'User not found' });
+                return;
+            }
+            res.status(200).json({ success: true, data: user });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+    }
+
+    // Update user
+    static async updateUser(req: Request, res: Response) {
+        try {
+            const id = Number(req.params.id);
+            const updated = await UserService.updateUser(id, req.body);
+            res.status(200).json({ success: true, message: 'User updated successfully', data: updated });
+        } catch (error: any) {
+            if (error.message === 'User not found') {
+                res.status(404).json({ success: false, message: 'User not found' });
+            } else {
+                res.status(400).json({ success: false, message: error.message || 'Failed to update user' });
+            }
+        }
+    }
 }
