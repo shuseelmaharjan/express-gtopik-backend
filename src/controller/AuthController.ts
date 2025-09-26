@@ -87,7 +87,7 @@ export class AuthController {
         return;
       }
 
-      const result = await AuthService.refreshAccessToken(refreshToken.trim());
+  const result = await AuthService.refreshAccessToken(refreshToken.trim(), req);
 
       if (result.success && result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {

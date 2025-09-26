@@ -12,4 +12,11 @@ const router = express.Router();
  */
 router.get('/v1/user-profile', AuthMiddleware.authenticateToken, UserController.getUserProfile);
 
+/**
+ * @route PUT /api/V1/deactivate-account
+ * @desc Deactivate user account
+ * @access Private
+ */
+router.put('/v1/deactivate-account', AuthMiddleware.authenticateToken, UserController.deactivateUserAccount);
+
 export default router;

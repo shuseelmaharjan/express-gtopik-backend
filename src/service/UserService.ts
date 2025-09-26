@@ -13,4 +13,21 @@ export class UserService {
             return null;
         }
     }
+
+    //deactivate user account
+    static async deactivateUserAccount(userId: number): Promise<boolean> {
+        try{
+            const user = await User.findByPk(userId);
+            if(!user){
+                throw new Error("User not found");
+            }
+            user.isActive = false;
+            await user.save();
+            console.log("User ", user.username, " deactivated successfully");
+            return true;
+        } catch (error) {
+            console.error("Error deactivating user account:", error);
+            return false;
+        }
+    }
 }

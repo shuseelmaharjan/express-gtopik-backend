@@ -4,6 +4,7 @@ import User from '../models/User';
 import { DateTimeHelper } from '../utils/DateTimeHelper';
 import { Op } from "sequelize";
 import { SessionService } from './SessionService';
+import UserSession from '../models/UserSession';
 
 interface LoginCredentials {
   identifier: string;
@@ -234,19 +235,28 @@ export class AuthService {
   /**
    * Generate new access token using refresh token
    */
-  static async refreshAccessToken(refreshToken: string): Promise<LoginResponse> {
+  static async refreshAccessToken(refreshToken: string, request?: any): Promise<LoginResponse> {
     try {
       const decoded = this.verifyRefreshToken(refreshToken);
       const user = await User.findByPk(decoded.id);
       if (!user || !user.isActive) {
-        return {
-          success: false,
-          message: 'User not found or inactive'
-        };
+        return { success: false, message: 'User not found or inactive' };
       }
       const newAccessToken = this.generateAccessToken(user);
 
-      // console.log(`Token refreshed for user: ${user.username} at ${DateTimeHelper.getDateTime()}`);
+      // Update existing session for this refresh token or create new one
+      const existingSession = await UserSession.findOne({
+        where: { userId: user.id, refreshToken, isActive: true }
+      });
+      if (existingSession) {
+        await existingSession.update({ accessToken: newAccessToken, lastActivity: new Date() });
+      } else if (request) {
+        try {
+          await SessionService.createSession(user.id, newAccessToken, request, refreshToken);
+        } catch (sessionErr) {
+          console.error('Failed to create session during refresh:', sessionErr);
+        }
+      }
 
       return {
         success: true,
@@ -262,15 +272,11 @@ export class AuthService {
           },
           accessToken: newAccessToken
         },
-        refreshToken: refreshToken
+        refreshToken
       };
-
     } catch (error) {
       console.error('Token refresh error:', error);
-      return {
-        success: false,
-        message: 'Invalid or expired refresh token'
-      };
+      return { success: false, message: 'Invalid or expired refresh token' };
     }
   }
 
