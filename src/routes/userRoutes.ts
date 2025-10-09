@@ -16,6 +16,12 @@ router.get('/v1/user-profile', AuthMiddleware.authenticateToken, UserController.
 // Create user (admin or superadmin)
 router.post('/v1/users', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdmin, UserController.createUser);
 
+// Create comprehensive user with documents (admin or superadmin)
+router.post('/v1/users/create-with-documents', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.createUserWithDocuments);
+
+// Get drafted users with optional role filtering (admin or superadmin)
+router.get('/v1/users/drafted/:role', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getDraftedUsers);
+
 // Get full user by id
 router.get('/v1/users/:id', AuthMiddleware.authenticateToken, UserController.getUserById);
 

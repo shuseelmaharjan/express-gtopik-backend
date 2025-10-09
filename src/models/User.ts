@@ -3,7 +3,7 @@ import sequelize from '../config/database';
 
 interface UserAttributes {
     id: number;
-    
+
     firstName: string;
     middleName?: string;
     lastName: string;
@@ -13,10 +13,10 @@ interface UserAttributes {
     role: 'superadmin' | 'admin' | 'staff' | 'teacher' | 'student' | 'accountant' | 'engineer' | 'guardian';
 
     // Personal information
-    dateOfBirth?: Date; 
+    dateOfBirth?: Date;
     sex: 'male' | 'female' | 'other';
-    profile?: string; 
-    profilePicture?: string; 
+    profile?: string;
+    profilePicture?: string;
 
     // Guardian / family information
     fatherName?: string;
@@ -45,7 +45,7 @@ interface UserAttributes {
     tempPostalCode?: string;
 
     // Academic / status info
-    status?: 'Graduated' | 'Enrolled' | 'Left' | null;
+    status?: 'Graduated' | 'Enrolled' | 'Left' | 'Pending';
     graduatedDate?: Date;
     leaveReason?: string;
 
@@ -58,6 +58,8 @@ interface UserAttributes {
     isActive: boolean;
     createdAt?: Date;
     updatedAt?: Date;
+    createdBy?: number;
+    updatedBy?: number;
 }
 
 type UserCreationAttributes = Optional<UserAttributes, 'id'>;
@@ -108,6 +110,8 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     public isActive!: boolean;
     public createdAt?: Date;
     public updatedAt?: Date;
+    public createdBy?: number;
+    public updatedBy?: number;
 }
 
 User.init(
@@ -168,7 +172,7 @@ User.init(
         tempWardNumber: { type: DataTypes.STRING(10), allowNull: true },
         tempTole: { type: DataTypes.STRING(255), allowNull: true },
         tempPostalCode: { type: DataTypes.STRING(20), allowNull: true },
-        status: { type: DataTypes.ENUM('Graduated', 'Enrolled', 'Left'), allowNull: true, defaultValue: 'Enrolled' },
+        status: { type: DataTypes.ENUM('Graduated', 'Enrolled', 'Left', 'Pending'), allowNull: false, defaultValue: 'Pending' },
         graduatedDate: { type: DataTypes.DATEONLY, allowNull: true },
         leaveReason: { type: DataTypes.TEXT, allowNull: true },
         dateofjoin: { type: DataTypes.DATEONLY, allowNull: true },
@@ -180,7 +184,12 @@ User.init(
             allowNull: false,
         },
         createdAt: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
-        updatedAt: { type: DataTypes.DATE, allowNull: true, defaultValue: DataTypes.NOW },
+        updatedAt: { type: DataTypes.DATE, allowNull: true, defaultValue: null },
+        createdBy: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
+        updatedBy: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: true,
+        },
     },
     {
         sequelize,

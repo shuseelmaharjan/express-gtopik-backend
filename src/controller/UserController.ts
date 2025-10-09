@@ -95,4 +95,68 @@ export class UserController{
             }
         }
     }
+
+    // Create comprehensive user with document handling
+    static async createUserWithDocuments(req: Request, res: Response) {
+        try {
+            // Get createdBy from authenticated user (assuming you have auth middleware)
+            const createdBy = UidHelper.getUserId(req.headers);
+
+            if(!createdBy){
+                res.status(400).json({
+                    success: false,
+                    message: "User ID is required in headers"
+                });
+                return;
+            }
+            
+            // Extract files from request
+            const files = (req as any).files || {};
+            
+            // Create user with documents
+            const result = await UserService.createUserWithDocuments(req.body, files, Number(createdBy));
+            
+            res.status(201).json({
+                success: true,
+                message: 'User created successfully with documents',
+                data: {
+                    user: result.user,
+                    uploadedDocuments: result.uploadedDocuments,
+                    generatedUsername: result.generatedUsername,
+                    defaultPassword: process.env.DEFAULT_USER_PASSWORD || 'Nepal123' // Let them know the default password 
+                }
+            });
+        } catch (error: any) {
+            console.error('Error in createUserWithDocuments controller:', error);
+            res.status(400).json({
+                success: false,
+                message: error.message || 'Failed to create user with documents'
+            });
+        }
+    }
+
+    // Get drafted users with optional role filtering
+    static async getDraftedUsers(req: Request, res: Response) {
+        try {
+            const { role } = req.params;
+            
+            const draftedUsers = await UserService.getDraftedUsers(role as string);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Drafted users fetched successfully',
+                data: {
+                    users: draftedUsers,
+                    total: draftedUsers.length,
+                    role: role || 'all'
+                }
+            });
+        } catch (error: any) {
+            console.error('Error in getDraftedUsers controller:', error);
+            res.status(400).json({
+                success: false,
+                message: error.message || 'Failed to fetch drafted users'
+            });
+        }
+    }
 }

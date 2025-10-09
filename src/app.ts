@@ -73,6 +73,10 @@ import userRoutes from './routes/userRoutes';
 import facultyRoutes from './routes/facultyRoutes';
 import departmentRoutes from './routes/departmentRoutes';
 import sessionRoutes from './routes/sessionRoutes';
+import classRoutes from './routes/classRoutes';
+import classSectionRoutes from './routes/classSectionRoutes';
+import coursesRoutes from './routes/coursesRoutes';
+import courseCostRoutes from './routes/courseCostRoutes';
 
 
 
@@ -82,5 +86,9 @@ app.use('/api', userRoutes);
 app.use('/api', facultyRoutes);
 app.use('/api', departmentRoutes);
 app.use('/api', sessionRoutes);
+app.use('/api', classRoutes);
+app.use('/api', classSectionRoutes);
+app.use('/api', coursesRoutes);
+app.use('/api', courseCostRoutes);
 
 export default app;

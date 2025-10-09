@@ -4,9 +4,7 @@ import sequelize from '../config/database';
 interface CourseAttributes {
     id: number;
     title: string;
-    listing: number;
     description: string;
-    cost: number;
     duration: number;
     image: string;
     coverImage: string;
@@ -15,7 +13,7 @@ interface CourseAttributes {
     updatedAt: Date;
     isActive: boolean;
     slug: string;
-    faculty_id: number;
+    department_id: number;
     createdBy: string;
     updatedBy?: string; // Optional field for tracking updates
 }
@@ -25,9 +23,7 @@ type CourseCreationAttributes = Optional<CourseAttributes, 'id' | 'createdAt' | 
 class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
     public id!: number;
     public title!: string;
-    public listing!: number;
     public description!: string;
-    public cost!: number;
     public duration!: number;
     public image!: string;
     public coverImage!: string;
@@ -36,7 +32,7 @@ class Course extends Model<CourseAttributes, CourseCreationAttributes> implement
     public updatedAt!: Date;
     public isActive!: boolean;
     public slug!: string;
-    public faculty_id!: number;
+    public department_id!: number;
     public createdBy!: string;
     public updatedBy?: string; // Optional field for tracking updates
 }
@@ -52,16 +48,8 @@ Course.init(
             type: DataTypes.STRING(255),
             allowNull: false,
         },
-        listing: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
         description: {
             type: DataTypes.TEXT,
-            allowNull: false,
-        },
-        cost: {
-            type: DataTypes.FLOAT,
             allowNull: false,
         },
         duration: {
@@ -98,14 +86,14 @@ Course.init(
         },
         slug: {
             type: DataTypes.STRING(255),
-            allowNull: false,
+            allowNull: true,
             unique: true,
         },
-        faculty_id: {
+        department_id: {
             type: DataTypes.INTEGER.UNSIGNED,
             allowNull: false,
             references: {
-                model: 'tbl_faculties',
+                model: 'tbl_departments',
                 key: 'id'
             },
             onUpdate: 'CASCADE',

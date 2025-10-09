@@ -3,15 +3,13 @@ import sequelize from '../config/database';
 
 interface ClassAttributes {
     id: number;
-    course_id: number;
+    className: string;
     faculty_id: number;
-    shift_id: number;
-    startFrom: Date;
-    endAt: Date;
+    department_id: number;
     createdBy: string;
-    updatedBy: string;
+    updatedBy: string | null;
     createdAt: Date;
-    updatedAt: Date;
+    updatedAt: Date | null;
     isActive: boolean;
 }
 
@@ -19,15 +17,13 @@ type ClassCreationAttributes = Optional<ClassAttributes, 'id' | 'createdAt' | 'u
 
 class Class extends Model<ClassAttributes, ClassCreationAttributes> implements ClassAttributes {
     public id!: number;
-    public course_id!: number;
+    public className!: string;
+    public department_id!: number;
     public faculty_id!: number;
-    public shift_id!: number;
-    public startFrom!: Date;
-    public endAt!: Date;
     public createdBy!: string;
-    public updatedBy!: string;
+    public updatedBy!: string | null;
     public createdAt!: Date;
-    public updatedAt!: Date;
+    public updatedAt!: Date | null;
     public isActive!: boolean;
 }
 
@@ -38,11 +34,15 @@ Class.init(
             autoIncrement: true,
             primaryKey: true,
         },
-        course_id: {
+        className: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        department_id: {
             type: DataTypes.INTEGER.UNSIGNED,
             allowNull: false,
             references: {
-                model: 'tbl_courses',
+                model: 'tbl_departments',
                 key: 'id'
             },
             onUpdate: 'CASCADE',
@@ -58,31 +58,13 @@ Class.init(
             onUpdate: 'CASCADE',
             onDelete: 'RESTRICT',
         },
-        shift_id: {
-            type: DataTypes.INTEGER.UNSIGNED,
-            allowNull: false,
-            references: {
-                model: 'tbl_shifts',
-                key: 'id'
-            },
-            onUpdate: 'CASCADE',
-            onDelete: 'RESTRICT',
-        },
-        startFrom: {
-            type: DataTypes.DATE,
-            allowNull: false,
-        },
-        endAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-        },
         createdBy: {
             type: DataTypes.STRING(255),
             allowNull: false,
         },
         updatedBy: {
             type: DataTypes.STRING(255),
-            allowNull: false,
+            allowNull: true,
         },
         createdAt: {
             type: DataTypes.DATE,
@@ -91,8 +73,7 @@ Class.init(
         },
         updatedAt: {
             type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
+            allowNull: true,
         },
         isActive: {
             type: DataTypes.BOOLEAN,
