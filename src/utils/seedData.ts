@@ -34,7 +34,8 @@ export const createSuperAdmin = async (): Promise<void> => {
       role: 'superadmin',
       dateofjoin: joinDate,
       sex:'male',
-      isActive: true
+      isActive: true,
+      status: 'Enrolled' // Set default status for superadmin
     });
 
     // console.log('Superadmin user created successfully');

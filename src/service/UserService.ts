@@ -1,6 +1,12 @@
 import User from "../models/User";
+import Document from "../models/Documents";
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
+import { UsernameGenerator } from '../utils/usernameGenerator';
+import { UserHelper } from '../utils/userHelper';
+import fs from 'fs';
+import path from 'path';
+import { generateUniqueFileName } from '../utils/fileNameHelper';
 
 export class UserService {
     // get user's username, email, role and profile by id
@@ -36,7 +42,7 @@ export class UserService {
     /**
      * Create a new user.
      * Required: firstName, lastName, email, username, role, sex
-     * Status rule: if role === 'student' -> status = 'Enrolled' else null
+     * Status rule: if role === 'student' -> status = 'Pending' else null
      * isActive forced true.
      */
     static async createUser(payload: any) {
@@ -58,8 +64,6 @@ export class UserService {
             password = Math.random().toString(36).slice(2,12) + '!A1';
         }
         const hashedPassword = await bcrypt.hash(password, 12);
-
-        const status = payload.role === 'student' ? 'Enrolled' : null;
 
         const user = await User.create({
             firstName: payload.firstName,
@@ -94,7 +98,7 @@ export class UserService {
             tempTole: payload.tempTole || null,
             tempPostalCode: payload.tempPostalCode || null,
             dateofjoin: payload.dateofjoin || null,
-            status,
+            status: 'Pending',
             isActive: true
         } as any);
 
@@ -138,18 +142,278 @@ export class UserService {
                 }
             }
         }
-
-        // Enforce status rule
-        if (user.role === 'student') {
-            user.status = 'Enrolled';
-        } else {
-            user.status = null as any;
-        }
-
         user.updatedAt = new Date();
         await user.save();
         const plain = user.get({ plain: true }) as any;
         delete plain.password;
         return plain;
+    }
+
+    /**
+     * Create user with comprehensive data handling and document upload support
+     * Supports both 'new' and 'transferred' admission types with different document requirements
+     */
+    static async createUserWithDocuments(payload: any, files: any, createdBy: number) {
+        const required = ['firstName', 'lastName', 'email', 'role', 'sex', 'admissionType'];
+        const missing = required.filter(f => !payload[f]);
+        if (missing.length) {
+            throw new Error(`Missing required fields: ${missing.join(', ')}`);
+        }
+
+        // Validate admission type
+        if (!['new', 'transferred'].includes(payload.admissionType)) {
+            throw new Error('admissionType must be either "new" or "transferred"');
+        }
+
+        // Check for existing email
+        const existingUser = await User.findOne({ where: { email: payload.email } });
+        if (existingUser) {
+            throw new Error('Email already exists');
+        }
+
+        // Generate unique username
+        const username = await UsernameGenerator.generateUniqueUsername();
+
+        // Hash default password
+        const hashedPassword = await bcrypt.hash('Shuseel', 12);
+
+        // Validate required files based on admission type
+        if (payload.admissionType === 'new') {
+            if (!files?.photo || !files?.birthCertificate) {
+                throw new Error('For new admission, both photo and birthCertificate files are required');
+            }
+        } else if (payload.admissionType === 'transferred') {
+            const requiredFiles = ['photo', 'birthCertificate', 'characterCertificate', 'application', 'transcript'];
+            const missingFiles = requiredFiles.filter(file => !files?.[file]);
+            if (missingFiles.length > 0) {
+                throw new Error(`For transferred admission, following files are required: ${missingFiles.join(', ')}`);
+            }
+        }
+
+        try {
+            // Create user
+            const user = await User.create({
+                firstName: payload.firstName,
+                middleName: payload.middleName || null,
+                lastName: payload.lastName,
+                email: payload.email,
+                username: username,
+                role: payload.role,
+                password: hashedPassword,
+                sex: payload.sex,
+                dateOfBirth: payload.dateOfBirth || null,
+                fatherName: payload.fatherName || null,
+                motherName: payload.motherName || null,
+                grandfatherName: payload.grandfatherName || null,
+                grandmotherName: payload.grandmotherName || null,
+                guardianName: payload.guardianName || null,
+                guardianContact: payload.guardianContact || null,
+                fatherNumber: payload.fatherNumber || null,
+                motherNumber: payload.motherNumber || null,
+                emergencyContact: payload.emergencyContact || null,
+                country: payload.country || null,
+                permanentState: payload.permanentState || null,
+                permanentCity: payload.permanentCity || null,
+                permanentLocalGovernment: payload.permanentLocalGovernment || null,
+                permanentWardNumber: payload.permanentWardNumber || null,
+                permanentTole: payload.permanentTole || null,
+                permanentPostalCode: payload.permanentPostalCode || null,
+                tempState: payload.tempState || null,
+                tempCity: payload.tempCity || null,
+                tempLocalGovernment: payload.tempLocalGovernment || null,
+                tempWardNumber: payload.tempWardNumber || null,
+                tempTole: payload.tempTole || null,
+                tempPostalCode: payload.tempPostalCode || null,
+                remark: payload.remark || null,
+                status: 'Pending',
+                isActive: true,
+                createdAt: new Date(),
+                createdBy: createdBy,
+            
+            } as any);
+
+            const userId = user.id;
+            const uploadedDocuments = [];
+
+            // Handle file uploads and document creation
+            for (const [fileKey, file] of Object.entries(files)) {
+                if (!file) continue;
+
+                const fileObj = file as any;
+
+                // Validate file
+                if (fileObj.size > 5 * 1024 * 1024) { // 5MB limit
+                    throw new Error(`File ${fileKey} exceeds 5MB limit`);
+                }
+
+                if (fileKey === 'photo') {
+                    // Handle profile photo - upload to /uploads/profile/
+                    const allowedPhotoExts = ['.jpg', '.jpeg', '.png'];
+                    const photoExt = path.extname(fileObj.name).toLowerCase();
+                    
+                    if (!allowedPhotoExts.includes(photoExt)) {
+                        throw new Error('Photo must be JPG or PNG format');
+                    }
+
+                    const profileDir = path.join(__dirname, '..', 'uploads', 'profile');
+                    fs.mkdirSync(profileDir, { recursive: true });
+
+                    const photoFileName = generateUniqueFileName(fileObj.name);
+                    const photoFilePath = path.join(profileDir, photoFileName);
+
+                    // Save photo file
+                    if (typeof fileObj.mv === 'function') {
+                        await new Promise<void>((resolve, reject) => {
+                            fileObj.mv(photoFilePath, (err: any) => err ? reject(err) : resolve());
+                        });
+                    } else if (fileObj.data) {
+                        fs.writeFileSync(photoFilePath, fileObj.data);
+                    }
+
+                    // Update user profile picture
+                    await User.update(
+                        { profile: `/uploads/profile/${photoFileName}` },
+                        { where: { id: userId } }
+                    );
+                } else {
+                    // Handle other documents - upload to /uploads/documents/
+                    const documentsDir = path.join(__dirname, '..', 'uploads', 'documents');
+                    fs.mkdirSync(documentsDir, { recursive: true });
+
+                    const uniqueFileName = generateUniqueFileName(fileObj.name);
+                    const documentFilePath = path.join(documentsDir, uniqueFileName);
+
+                    // Save document file
+                    if (typeof fileObj.mv === 'function') {
+                        await new Promise<void>((resolve, reject) => {
+                            fileObj.mv(documentFilePath, (err: any) => err ? reject(err) : resolve());
+                        });
+                    } else if (fileObj.data) {
+                        fs.writeFileSync(documentFilePath, fileObj.data);
+                    }
+
+                    // Determine document type for database
+                    let documentType: string;
+                    switch (fileKey) {
+                        case 'birthCertificate':
+                            documentType = 'birthcertificate';
+                            break;
+                        case 'characterCertificate':
+                            documentType = 'charactercertificate';
+                            break;
+                        case 'transcript':
+                            documentType = 'transcript';
+                            break;
+                        case 'citizenship':
+                            documentType = 'citizenship';
+                            break;
+                        case 'pan':
+                            documentType = 'pan';
+                            break;
+                        case 'application':
+                        default:
+                            documentType = 'other';
+                            break;
+                    }
+
+                    // Create document record
+                    const document = await Document.create({
+                        user_id: userId,
+                        document: `/uploads/documents/${uniqueFileName}`,
+                        type: documentType,
+                        createdBy: createdBy,
+                        createdAt: new Date()
+                    });
+
+                    uploadedDocuments.push({
+                        type: documentType,
+                        fileName: uniqueFileName,
+                        originalName: fileObj.name
+                    });
+                }
+            }
+
+            const userPlain = user.get({ plain: true }) as any;
+            delete userPlain.password;
+
+            return {
+                user: userPlain,
+                uploadedDocuments: uploadedDocuments,
+                generatedUsername: username
+            };
+
+        } catch (error) {
+            console.error('Error creating user with documents:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get drafted users based on role and status 'Pending'
+     * Supports roles: staff, teacher, student, accountant, guardian
+     * Returns all user records with createdBy user information
+     */
+    static async getDraftedUsers(role?: string): Promise<any[]> {
+        try {
+            const allowedRoles = ['staff', 'teacher', 'student', 'accountant', 'guardian'];
+            
+            let whereCondition: any = { 
+                status: 'Pending',
+                isActive: true
+            };
+
+            // If role is provided, validate and filter by it
+            if (role) {
+                if (!allowedRoles.includes(role)) {
+                    throw new Error(`Invalid role. Allowed roles are: ${allowedRoles.join(', ')}`);
+                }
+                whereCondition.role = role;
+            } else {
+                // If no role specified, get all allowed roles
+                whereCondition.role = { [Op.in]: allowedRoles };
+            }
+
+            const users = await User.findAll({
+                where: whereCondition,
+                attributes: [
+                    'id', 'firstName', 'middleName', 'lastName', 'email', 'username', 
+                    'role', 'status', 'createdAt', 'isActive', 'createdBy', 'remark',
+                    'dateOfBirth', 'sex', 'fatherName', 'motherName', 'guardianName',
+                    'emergencyContact', 'country', 'permanentState', 'permanentCity',
+                    'profile', 'profilePicture'
+                ],
+                order: [['createdAt', 'DESC']]
+            });
+
+            // Enhance users with createdBy user information
+            const enhancedUsers = await Promise.all(
+                users.map(async (user) => {
+                    const userPlain = user.get({ plain: true });
+                    
+                    // Get createdBy user information
+                    let createdByUser = null;
+                    if (userPlain.createdBy) {
+                        createdByUser = await UserHelper.getUserById(userPlain.createdBy);
+                    }
+
+                    return {
+                        ...userPlain,
+                        createdByUser: createdByUser ? {
+                            id: createdByUser.id,
+                            firstName: createdByUser.firstName,
+                            middleName: createdByUser.middleName,
+                            lastName: createdByUser.lastName,
+                            fullName: `${createdByUser.firstName} ${createdByUser.middleName || ''} ${createdByUser.lastName}`.replace(/\s+/g, ' ').trim()
+                        } : null
+                    };
+                })
+            );
+
+            return enhancedUsers;
+
+        } catch (error) {
+            console.error("Error fetching drafted users:", error);
+            throw error;
+        }
     }
 }

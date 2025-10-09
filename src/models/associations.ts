@@ -5,6 +5,9 @@ import Courses from './Courses';
 import Shifts from './Shifts';
 import Class from './Class';
 import UserSession from './UserSession';
+import Document from './Documents';
+import ClassSection from './ClassSection';
+import CourseCost from './CourseCost';
 
 // Faculty - Department associations
 Faculty.hasMany(Department, {
@@ -28,6 +31,72 @@ UserSession.belongsTo(User, {
   as: 'user'
 });
 
+// User - Document associations
+User.hasMany(Document, {
+  foreignKey: 'user_id',
+  as: 'documents'
+});
+
+Document.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+// Class - Faculty associations
+Class.belongsTo(Faculty, {
+  foreignKey: 'faculty_id',
+  as: 'faculty'
+});
+
+Faculty.hasMany(Class, {
+  foreignKey: 'faculty_id',
+  as: 'classes'
+});
+
+// Class - Department associations
+Class.belongsTo(Department, {
+  foreignKey: 'department_id',
+  as: 'department'
+});
+
+Department.hasMany(Class, {
+  foreignKey: 'department_id',
+  as: 'classes'
+});
+
+// Class - ClassSection associations
+Class.hasMany(ClassSection, {
+  foreignKey: 'class_id',
+  as: 'sections'
+});
+
+ClassSection.belongsTo(Class, {
+  foreignKey: 'class_id',
+  as: 'class'
+});
+
+// Course - Department associations
+Courses.belongsTo(Department, {
+  foreignKey: 'department_id',
+  as: 'department'
+});
+
+Department.hasMany(Courses, {
+  foreignKey: 'department_id',
+  as: 'courses'
+});
+
+// Course - CourseCost associations
+Courses.hasMany(CourseCost, {
+  foreignKey: 'course_id',
+  as: 'costs'
+});
+
+CourseCost.belongsTo(Courses, {
+  foreignKey: 'course_id',
+  as: 'course'
+});
+
 // You can add more associations here as needed
 // For example, if you have other relationships:
 // Faculty.hasMany(User, { foreignKey: 'facultyId', as: 'users' });
@@ -40,5 +109,8 @@ export {
   Courses,
   Shifts,
   Class,
-  UserSession
+  UserSession,
+  Document,
+  ClassSection,
+  CourseCost
 };

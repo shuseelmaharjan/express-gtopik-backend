@@ -12,7 +12,7 @@ router.get(
 
 // Get department by ID - requires admin/superadmin role
 router.get(
-    '/v1/:id', 
+    '/v1/departments/:id', 
     DepartmentController.getDepartmentById
 );
 
@@ -44,7 +44,7 @@ router.put(
 router.get(
     '/v1/departmentsfaculty/:facultyId', 
     AuthMiddleware.authenticateToken, 
-    AuthMiddleware.requireAdmin, 
+    AuthMiddleware.requireAdminstration, 
     DepartmentController.getDepartmentsByFacultyId
 );
 

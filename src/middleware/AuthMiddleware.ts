@@ -106,4 +106,8 @@ export class AuthMiddleware {
   static requireStudent(req: Request, res: Response, next: NextFunction): void {
     AuthMiddleware.authorize(['student'])(req, res, next);
   }
+
+  static requireAdminstration(req:Request, res:Response, next:NextFunction): void {
+    AuthMiddleware.authorize(['superadmin', 'admin', 'staff'])(req, res, next);
+  }
 }
