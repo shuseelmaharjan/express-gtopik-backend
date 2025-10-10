@@ -159,4 +159,42 @@ export class UserController{
             });
         }
     }
+
+    // Get user information for enrollment
+    static async getUserInfoForEnrollment(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            
+            if (isNaN(parseInt(userId))) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+                return;
+            }
+
+            const userInfo = await UserService.getUserInfoForEnrollment(parseInt(userId));
+            
+            res.status(200).json({
+                success: true,
+                message: 'User information for enrollment fetched successfully',
+                data: userInfo
+            });
+        } catch (error: any) {
+            console.error('Error in getUserInfoForEnrollment controller:', error);
+            
+            if (error.message === 'User not found') {
+                res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+                return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to fetch user information for enrollment'
+            });
+        }
+    }
 }

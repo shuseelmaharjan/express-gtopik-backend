@@ -219,6 +219,31 @@ class ClassController{
         }
     }
 
+    static async getClassesByDepartmentId(req: Request, res: Response): Promise<void>{
+        try{
+            const { departmentId } = req.params;
+            if(isNaN(parseInt(departmentId))){
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid department ID"
+                });
+                return;
+            }
+            const classes = await ClassService.getClassesByDepartmentId(parseInt(departmentId));
+            res.status(200).json({
+                success: true,
+                message: "Classes fetched successfully",
+                data: classes
+            });
+        } catch(error){
+            console.error("Error in getClassesByDepartmentId controller:", error);
+            res.status(500).json({
+                success: false,
+                message: "Internal server error"
+            });
+        }
+    }
+
 }
 
 export default ClassController;
