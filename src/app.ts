@@ -77,6 +77,8 @@ import classRoutes from './routes/classRoutes';
 import classSectionRoutes from './routes/classSectionRoutes';
 import coursesRoutes from './routes/coursesRoutes';
 import courseCostRoutes from './routes/courseCostRoutes';
+import feeStructureRoutes from './routes/feeStructureRoutes';
+import studentEnrollmentRoutes from './routes/studentEnrollmentRoutes';
 
 
 
@@ -90,5 +92,7 @@ app.use('/api', classRoutes);
 app.use('/api', classSectionRoutes);
 app.use('/api', coursesRoutes);
 app.use('/api', courseCostRoutes);
+app.use('/api', feeStructureRoutes);
+app.use('/api', studentEnrollmentRoutes);
 
 export default app;

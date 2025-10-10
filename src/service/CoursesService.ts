@@ -578,6 +578,64 @@ class CoursesService {
             }
         }
     }
+
+    async getCourseInfoWithCost(departmentId: number) {
+        try {
+            const courses = await Course.findAll({
+                where: { 
+                    department_id: departmentId,
+                    isActive: true 
+                },
+                attributes: ['id', 'title', 'duration', 'image', 'isActive'],
+                include: [
+                    {
+                        model: CourseCost,
+                        as: 'costs',
+                        where: { isActive: true },
+                        attributes: ['cost', 'currency'],
+                        required: false // This allows courses without active costs to be returned
+                    }
+                ]
+            });
+
+            if (!courses || courses.length === 0) {
+                return [];
+            }
+
+            // Process courses data
+            const processedCourses = courses.map(course => {
+                const courseData = course.get({ plain: true }) as any;
+                
+                // Extract the single active cost or set to null
+                let cost = null;
+                if (courseData.costs && courseData.costs.length > 0) {
+                    const activeCost = courseData.costs[0]; // Since we filter by isActive: true, there should be only one
+                    cost = {
+                        cost: parseFloat(activeCost.cost),
+                        currency: activeCost.currency.toLowerCase()
+                    };
+                }
+
+                // Return only the required fields
+                return {
+                    id: courseData.id,
+                    title: courseData.title,
+                    duration: courseData.duration,
+                    image: courseData.image,
+                    isActive: courseData.isActive,
+                    cost: cost
+                };
+            });
+
+            return processedCourses;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error fetching course info with cost: ${error.message}`);
+            } else {
+                throw new Error('Error fetching course info with cost: Unknown error');
+            }
+        }
+    }
 }
 
 export default new CoursesService();

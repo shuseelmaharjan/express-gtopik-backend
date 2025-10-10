@@ -35,6 +35,13 @@ router.get('/v1/courses-with-costs', AuthMiddleware.authenticateToken, CoursesCo
 router.get('/v1/courses/popular', AuthMiddleware.authenticateToken, CoursesController.getPopularCourses);
 
 /**
+ * @route GET /api/v1/courses/department/:departmentId/info-with-cost
+ * @desc Get courses info with active cost by department
+ * @access Private
+ */
+router.get('/v1/courses/department/:departmentId/info-with-cost', AuthMiddleware.authenticateToken, CoursesController.getCourseInfoWithCost);
+
+/**
  * @route GET /api/v1/courses/department/:department_id
  * @desc Get courses by department ID
  * @access Private

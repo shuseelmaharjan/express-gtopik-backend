@@ -11,4 +11,11 @@ const router = express.Router();
  */
 router.post('/v1/course-costs', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CourseCostController.createCourseCost);
 
+/**
+ * @route POST /api/v1/course-costs
+ * @desc Update course cost (deactivate existing and create new)
+ * @access Private (Admin/SuperAdmin)
+ */
+router.post('/v1/update-course-costs', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CourseCostController.updateCourseCost);
+
 export default router;

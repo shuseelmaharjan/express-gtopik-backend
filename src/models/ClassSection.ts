@@ -28,7 +28,7 @@ export class ClassSection extends Model<ClassSectionAttributes, ClassSectionCrea
 ClassSection.init(
     {
         id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER.UNSIGNED,
             autoIncrement: true,
             primaryKey: true
         },

@@ -22,6 +22,9 @@ router.post('/v1/users/create-with-documents', AuthMiddleware.authenticateToken,
 // Get drafted users with optional role filtering (admin or superadmin)
 router.get('/v1/users/drafted/:role', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getDraftedUsers);
 
+// Get user information for enrollment (admin or superadmin)
+router.get('/v1/users/:userId/enrollment-info', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getUserInfoForEnrollment);
+
 // Get full user by id
 router.get('/v1/users/:id', AuthMiddleware.authenticateToken, UserController.getUserById);
 

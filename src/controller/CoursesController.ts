@@ -542,6 +542,44 @@ class CoursesController {
             });
         }
     }
+
+    // Get course info with active cost by department
+    static async getCourseInfoWithCost(req: Request, res: Response): Promise<void> {
+        try {
+            const { departmentId } = req.params;
+            
+            if (isNaN(parseInt(departmentId))) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid department ID"
+                });
+                return;
+            }
+
+            const courses = await CoursesService.getCourseInfoWithCost(parseInt(departmentId));
+            
+            res.status(200).json({
+                success: true,
+                message: "Courses info with cost fetched successfully",
+                data: courses
+            });
+        } catch (error: any) {
+            console.error("Error in getCourseInfoWithCost controller:", error);
+            
+            if (error.message && error.message.startsWith('Error fetching course info with cost:')) {
+                res.status(400).json({
+                    success: false,
+                    message: error.message.replace('Error fetching course info with cost: ', '')
+                });
+                return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Internal server error"
+            });
+        }
+    }
 }
 
 export default CoursesController;

@@ -246,5 +246,22 @@ class ClassService{
             }
         }
     }
+
+    //get class by department id
+    async getClassesByDepartmentId(department_id: number){
+        try{
+            const classes = await Class.findAll({
+                where: { department_id: department_id, isActive: true },
+                attributes: ['id', 'className', 'isActive']
+            });
+            return classes;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(`Error fetching classes by department ID: ${error.message}`);
+            } else {
+                throw new Error('Error fetching classes by department ID: Unknown error');
+            }
+        }
+    }
 }
 export default new ClassService();

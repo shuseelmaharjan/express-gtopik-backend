@@ -7,6 +7,7 @@ import { UserHelper } from '../utils/userHelper';
 import fs from 'fs';
 import path from 'path';
 import { generateUniqueFileName } from '../utils/fileNameHelper';
+import FeeStructure from "../models/FeeStructure";
 
 export class UserService {
     // get user's username, email, role and profile by id
@@ -413,6 +414,49 @@ export class UserService {
 
         } catch (error) {
             console.error("Error fetching drafted users:", error);
+            throw error;
+        }
+    }
+
+    static async getUserInfoForEnrollment(userId: number) {
+        try {
+            // Get user with documents
+            const user = await User.findByPk(userId, {
+                attributes: [
+                    'id', 'firstName', 'middleName', 'lastName', 'email', 'remark',
+                    'dateOfBirth', 'sex', 'profile', 'profilePicture', 'status', 'isActive'
+                ],
+                include: [
+                    { 
+                        model: Document, 
+                        as: 'documents', 
+                        attributes: ['id', 'document', 'type'] 
+                    }
+                ]
+            });
+
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            // Separately get fee structures required for admission
+            const admissionFeeStructures = await FeeStructure.findAll({
+                where: {
+                    isActive: true,
+                    requireonAdmission: true
+                },
+                attributes: ['id', 'feeType', 'amount', 'currency', 'description'],
+                order: [['feeType', 'ASC']]
+            });
+
+            const userData = user.get({ plain: true });
+
+            return {
+                user: userData,
+                admissionFeeStructures: admissionFeeStructures.map(fee => fee.get({ plain: true }))
+            };
+        } catch (error) {
+            console.error("Error fetching user information for enrollment:", error);
             throw error;
         }
     }

@@ -39,4 +39,11 @@ router.put('/v1/classes/:id', AuthMiddleware.authenticateToken, AuthMiddleware.r
  */
 router.delete('/v1/classes/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, ClassController.deactivateClass);
 
+/**
+ * @route GET /api/v1/classes/department/:departmentId
+ * @desc Get classes by department ID
+ * @access Private
+ */
+router.get('/v1/classes/department/:departmentId', AuthMiddleware.authenticateToken, ClassController.getClassesByDepartmentId);
+
 export default router;

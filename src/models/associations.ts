@@ -8,6 +8,7 @@ import UserSession from './UserSession';
 import Document from './Documents';
 import ClassSection from './ClassSection';
 import CourseCost from './CourseCost';
+import StudentEnrollment from './StudentEnrollment';
 
 // Faculty - Department associations
 Faculty.hasMany(Department, {
@@ -97,6 +98,57 @@ CourseCost.belongsTo(Courses, {
   as: 'course'
 });
 
+// StudentEnrollment associations
+StudentEnrollment.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+StudentEnrollment.belongsTo(Department, {
+  foreignKey: 'department_id',
+  as: 'department'
+});
+
+StudentEnrollment.belongsTo(Courses, {
+  foreignKey: 'course_id',
+  as: 'course'
+});
+
+StudentEnrollment.belongsTo(Class, {
+  foreignKey: 'class_id',
+  as: 'class'
+});
+
+StudentEnrollment.belongsTo(ClassSection, {
+  foreignKey: 'section_id',
+  as: 'section'
+});
+
+User.hasMany(StudentEnrollment, {
+  foreignKey: 'user_id',
+  as: 'enrollments'
+});
+
+Department.hasMany(StudentEnrollment, {
+  foreignKey: 'department_id',
+  as: 'enrollments'
+});
+
+Courses.hasMany(StudentEnrollment, {
+  foreignKey: 'course_id',
+  as: 'enrollments'
+});
+
+Class.hasMany(StudentEnrollment, {
+  foreignKey: 'class_id',
+  as: 'enrollments'
+});
+
+ClassSection.hasMany(StudentEnrollment, {
+  foreignKey: 'section_id',
+  as: 'enrollments'
+});
+
 // You can add more associations here as needed
 // For example, if you have other relationships:
 // Faculty.hasMany(User, { foreignKey: 'facultyId', as: 'users' });
@@ -112,5 +164,6 @@ export {
   UserSession,
   Document,
   ClassSection,
-  CourseCost
+  CourseCost,
+  StudentEnrollment
 };
