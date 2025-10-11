@@ -95,6 +95,7 @@ StudentEnrollment.init(
         discountType: {
             type: DataTypes.ENUM('scholarship', 'regular', 'other', 'none'),
             allowNull: true,
+            defaultValue: 'none',
         },
         netFees: {
             type: DataTypes.DECIMAL(10, 2),

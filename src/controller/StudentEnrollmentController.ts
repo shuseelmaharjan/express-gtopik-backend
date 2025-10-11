@@ -12,7 +12,6 @@ class StudentEnrollmentController {
                 course_id,
                 class_id,
                 section_id,
-                enrollmentDate,
                 totalFees,
                 discount,
                 discountType,
@@ -30,16 +29,14 @@ class StudentEnrollmentController {
                 return;
             }
 
-            // Validate required fields
+            // Validate required fields (discount and discountType are optional)
             const requiredFields = {
                 user_id,
                 department_id,
                 course_id,
                 class_id,
                 section_id,
-                enrollmentDate,
                 totalFees,
-                discount,
                 netFees
             };
 
@@ -96,16 +93,6 @@ class StudentEnrollmentController {
                 return;
             }
 
-            // Validate enrollmentDate format
-            const enrollmentDateObj = new Date(enrollmentDate);
-            if (isNaN(enrollmentDateObj.getTime())) {
-                res.status(400).json({
-                    success: false,
-                    message: "enrollmentDate must be a valid date (YYYY-MM-DD format)"
-                });
-                return;
-            }
-
             // Validate totalFees
             if (isNaN(parseFloat(totalFees)) || parseFloat(totalFees) < 0) {
                 res.status(400).json({
@@ -115,11 +102,11 @@ class StudentEnrollmentController {
                 return;
             }
 
-            // Validate discount
-            if (isNaN(parseFloat(discount)) || parseFloat(discount) < 0) {
+            // Validate discount (optional field)
+            if (discount !== undefined && (isNaN(parseFloat(discount)) || parseFloat(discount) < 0)) {
                 res.status(400).json({
                     success: false,
-                    message: "discount must be a non-negative number"
+                    message: "discount must be a non-negative number when provided"
                 });
                 return;
             }
@@ -148,9 +135,8 @@ class StudentEnrollmentController {
                 course_id: parseInt(course_id),
                 class_id: parseInt(class_id),
                 section_id: parseInt(section_id),
-                enrollmentDate: enrollmentDate,
                 totalFees: parseFloat(totalFees),
-                discount: parseFloat(discount),
+                discount: discount !== undefined ? parseFloat(discount) : undefined,
                 discountType,
                 netFees: parseFloat(netFees),
                 remarks,

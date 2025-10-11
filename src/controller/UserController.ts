@@ -197,4 +197,60 @@ export class UserController{
             });
         }
     }
+
+    // Get all enrolled students with their enrollment information
+    static async getEnrolledStudentsWithEnrollmentInfo(req: Request, res: Response) {
+        try {
+            const enrolledStudents = await UserService.getEnrolledStudentsWithEnrollmentInfo();
+            
+            res.status(200).json({
+                success: true,
+                message: 'Enrolled students with enrollment information fetched successfully',
+                data: {
+                    students: enrolledStudents,
+                    total: enrolledStudents.length
+                }
+            });
+        } catch (error: any) {
+            console.error('Error in getEnrolledStudentsWithEnrollmentInfo controller:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to fetch enrolled students with enrollment information'
+            });
+        }
+    }
+
+    // Search enrolled students with their enrollment information
+    static async searchEnrolledStudentsWithEnrollmentInfo(req: Request, res: Response) {
+        try {
+            const searchQuery = req.query.q as string;
+            
+            if (!searchQuery || searchQuery.trim().length === 0) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Search query parameter "q" is required'
+                });
+                return;
+            }
+
+            const searchResults = await UserService.searchEnrolledStudentsWithEnrollmentInfo(searchQuery);
+            
+            res.status(200).json({
+                success: true,
+                message: 'Enrolled students search completed successfully',
+                data: {
+                    students: searchResults,
+                    total: searchResults.length,
+                    searchQuery: searchQuery
+                }
+            });
+        } catch (error: any) {
+            console.error('Error in searchEnrolledStudentsWithEnrollmentInfo controller:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to search enrolled students with enrollment information'
+            });
+        }
+    }
+
 }
