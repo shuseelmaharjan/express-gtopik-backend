@@ -25,6 +25,12 @@ router.get('/v1/users/drafted/:role', AuthMiddleware.authenticateToken, AuthMidd
 // Get user information for enrollment (admin or superadmin)
 router.get('/v1/users/:userId/enrollment-info', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getUserInfoForEnrollment);
 
+// Get all enrolled students with enrollment information (admin or superadmin)
+router.get('/v1/students/enrolled-with-enrollment-info', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getEnrolledStudentsWithEnrollmentInfo);
+
+// Search enrolled students with enrollment information (admin or superadmin)
+router.get('/v1/students/search-enrolled-with-enrollment-info', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.searchEnrolledStudentsWithEnrollmentInfo);
+
 // Get full user by id
 router.get('/v1/users/:id', AuthMiddleware.authenticateToken, UserController.getUserById);
 
@@ -42,5 +48,7 @@ router.put('/v1/deactivate-account', AuthMiddleware.authenticateToken, UserContr
 router.post('/v1/users/upload-profile-picture', AuthMiddleware.authenticateToken, (req, res) => {
 	UploadController.uploadProfile(req, res);
 });
+
+
 
 export default router;

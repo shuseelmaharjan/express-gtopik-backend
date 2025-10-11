@@ -1,5 +1,9 @@
 import User from "../models/User";
 import Document from "../models/Documents";
+import StudentEnrollment from "../models/StudentEnrollment";
+import Class from "../models/Class";
+import ClassSection from "../models/ClassSection";
+import Department from "../models/Department";
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import { UsernameGenerator } from '../utils/usernameGenerator';
@@ -460,4 +464,234 @@ export class UserService {
             throw error;
         }
     }
+
+    /**
+     * Get all enrolled students with their enrollment information
+     * Returns students with role=student, status=Enrolled, isActive=true
+     * Along with their enrollment records where isActive=true
+     * Includes department, class, and section names
+     */
+    static async getEnrolledStudentsWithEnrollmentInfo() {
+        try {
+            const enrolledStudents = await User.findAll({
+                where: {
+                    role: 'student',
+                    status: 'Enrolled',
+                    isActive: true
+                },
+                attributes: [
+                    'id', 'firstName', 'middleName', 'lastName', 'username', 
+                    'dateOfBirth', 'profile', 'guardianName', 'guardianContact'
+                ],
+                include: [
+                    {
+                        model: StudentEnrollment,
+                        as: 'enrollments',
+                        where: { isActive: true },
+                        required: true, // INNER JOIN - only users with active enrollments
+                        attributes: [
+                            'id', 'department_id', 'course_id', 'class_id', 
+                            'section_id', 'enrollmentDate', 'totalFees', 'discount', 
+                            'discountType', 'netFees', 'remarks'
+                        ],
+                        include: [
+                            {
+                                model: Department,
+                                as: 'department',
+                                attributes: ['id', 'departmentName'],
+                                required: true
+                            },
+                            {
+                                model: Class,
+                                as: 'class',
+                                attributes: ['id', 'className'],
+                                required: true
+                            },
+                            {
+                                model: ClassSection,
+                                as: 'section',
+                                attributes: ['id', 'sectionName'],
+                                required: true
+                            }
+                        ]
+                    }
+                ],
+                order: [
+                    ['firstName', 'ASC'],
+                    ['lastName', 'ASC'],
+                    [{ model: StudentEnrollment, as: 'enrollments' }, 'enrollmentDate', 'DESC']
+                ]
+            });
+
+            // Transform the data to the required format
+            const transformedData = enrolledStudents.map(student => {
+                const studentData = student.get({ plain: true }) as any;
+                
+                // Combine name
+                const fullName = [
+                    studentData.firstName,
+                    studentData.middleName,
+                    studentData.lastName
+                ].filter(name => name && name.trim()).join(' ');
+
+                // Transform enrollment data
+                const enrollments = studentData.enrollments.map((enrollment: any) => ({
+                    enrollmentId: enrollment.id,
+                    departmentId: enrollment.department_id,
+                    departmentName: enrollment.department.departmentName,
+                    courseId: enrollment.course_id,
+                    classId: enrollment.class_id,
+                    className: enrollment.class.className,
+                    sectionId: enrollment.section_id,
+                    sectionName: enrollment.section.sectionName,
+                    enrollmentDate: enrollment.enrollmentDate,
+                    totalFees: enrollment.totalFees,
+                    discount: enrollment.discount,
+                    discountType: enrollment.discountType,
+                    netFees: enrollment.netFees,
+                    remarks: enrollment.remarks
+                }));
+
+                return {
+                    userId: studentData.id,
+                    name: fullName,
+                    username: studentData.username,
+                    dateOfBirth: studentData.dateOfBirth,
+                    profile: studentData.profile,
+                    guardianName: studentData.guardianName,
+                    guardianContact: studentData.guardianContact,
+                    enrollments: enrollments
+                };
+            });
+
+            return transformedData;
+
+        } catch (error) {
+            console.error("Error fetching enrolled students with enrollment info:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Search enrolled students with their enrollment information
+     * Searches by name (firstName, middleName, lastName), username, guardianName, guardianContact
+     * Returns students with role=student, status=Enrolled, isActive=true
+     * Along with their enrollment records where isActive=true
+     * Includes department, class, and section names
+     */
+    static async searchEnrolledStudentsWithEnrollmentInfo(searchQuery: string) {
+        try {
+            if (!searchQuery || searchQuery.trim().length === 0) {
+                throw new Error("Search query is required");
+            }
+
+            const searchTerm = `%${searchQuery.trim()}%`;
+
+            const enrolledStudents = await User.findAll({
+                where: {
+                    role: 'student',
+                    status: 'Enrolled',
+                    isActive: true,
+                    [Op.or]: [
+                        { firstName: { [Op.like]: searchTerm } },
+                        { middleName: { [Op.like]: searchTerm } },
+                        { lastName: { [Op.like]: searchTerm } },
+                        { username: { [Op.like]: searchTerm } },
+                        { guardianName: { [Op.like]: searchTerm } },
+                        { guardianContact: { [Op.like]: searchTerm } }
+                    ]
+                },
+                attributes: [
+                    'id', 'firstName', 'middleName', 'lastName', 'username', 
+                    'dateOfBirth', 'profile', 'guardianName', 'guardianContact'
+                ],
+                include: [
+                    {
+                        model: StudentEnrollment,
+                        as: 'enrollments',
+                        where: { isActive: true },
+                        required: true, // INNER JOIN - only users with active enrollments
+                        attributes: [
+                            'id', 'department_id', 'course_id', 'class_id', 
+                            'section_id', 'enrollmentDate', 'totalFees', 'discount', 
+                            'discountType', 'netFees', 'remarks'
+                        ],
+                        include: [
+                            {
+                                model: Department,
+                                as: 'department',
+                                attributes: ['id', 'departmentName'],
+                                required: true
+                            },
+                            {
+                                model: Class,
+                                as: 'class',
+                                attributes: ['id', 'className'],
+                                required: true
+                            },
+                            {
+                                model: ClassSection,
+                                as: 'section',
+                                attributes: ['id', 'sectionName'],
+                                required: true
+                            }
+                        ]
+                    }
+                ],
+                order: [
+                    ['firstName', 'ASC'],
+                    ['lastName', 'ASC'],
+                    [{ model: StudentEnrollment, as: 'enrollments' }, 'enrollmentDate', 'DESC']
+                ]
+            });
+
+            // Transform the data to the required format
+            const transformedData = enrolledStudents.map(student => {
+                const studentData = student.get({ plain: true }) as any;
+                
+                // Combine name
+                const fullName = [
+                    studentData.firstName,
+                    studentData.middleName,
+                    studentData.lastName
+                ].filter(name => name && name.trim()).join(' ');
+
+                // Transform enrollment data
+                const enrollments = studentData.enrollments.map((enrollment: any) => ({
+                    enrollmentId: enrollment.id,
+                    departmentId: enrollment.department_id,
+                    departmentName: enrollment.department.departmentName,
+                    courseId: enrollment.course_id,
+                    classId: enrollment.class_id,
+                    className: enrollment.class.className,
+                    sectionId: enrollment.section_id,
+                    sectionName: enrollment.section.sectionName,
+                    enrollmentDate: enrollment.enrollmentDate,
+                    totalFees: enrollment.totalFees,
+                    discount: enrollment.discount,
+                    discountType: enrollment.discountType,
+                    netFees: enrollment.netFees,
+                    remarks: enrollment.remarks
+                }));
+
+                return {
+                    userId: studentData.id,
+                    name: fullName,
+                    username: studentData.username,
+                    dateOfBirth: studentData.dateOfBirth,
+                    profile: studentData.profile,
+                    guardianName: studentData.guardianName,
+                    guardianContact: studentData.guardianContact,
+                    enrollments: enrollments
+                };
+            });
+
+            return transformedData;
+
+        } catch (error) {
+            console.error("Error searching enrolled students with enrollment info:", error);
+            throw error;
+        }
+    }
+
 }

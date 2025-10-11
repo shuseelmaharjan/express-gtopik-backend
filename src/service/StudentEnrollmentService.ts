@@ -13,15 +13,20 @@ class StudentEnrollmentService {
         course_id: number;
         class_id: number;
         section_id: number;
-        enrollmentDate: string;
+        enrollmentDate?: string;
         totalFees: number;
-        discount: number;
+        discount?: number;
         discountType?: string;
         netFees: number;
         remarks?: string;
         createdBy: string;
     }) {
         try {
+            // Set default values
+            const currentDateTime = new Date();
+            const actualDiscount = enrollmentData.discount ?? 0;
+            const actualDiscountType = enrollmentData.discountType ?? 'none';
+            const actualEnrollmentDate = enrollmentData.enrollmentDate ? new Date(enrollmentData.enrollmentDate) : currentDateTime;
             // Validate that the user exists and is active
             const user = await User.findOne({
                 where: { id: enrollmentData.user_id, isActive: true }
@@ -90,18 +95,18 @@ class StudentEnrollmentService {
             }
 
             // Validate discount type if provided
-            if (enrollmentData.discountType && !['scholarship', 'regular', 'other', 'none'].includes(enrollmentData.discountType)) {
-                throw new Error('Invalid discount type. Must be none, scholarship, regular, or other');
+            if (actualDiscountType && !['scholarship', 'regular', 'other', 'none'].includes(actualDiscountType)) {
+                throw new Error('Invalid discount type. Must be scholarship, regular, other, or none');
             }
 
             // Validate that netFees calculation is correct
-            const calculatedNetFees = enrollmentData.totalFees - enrollmentData.discount;
+            const calculatedNetFees = enrollmentData.totalFees - actualDiscount;
             if (Math.abs(calculatedNetFees - enrollmentData.netFees) > 0.01) { // Allow for small rounding differences
                 throw new Error('Net fees calculation is incorrect. It should be totalFees - discount');
             }
 
             // Validate that discount is not greater than total fees
-            if (enrollmentData.discount > enrollmentData.totalFees) {
+            if (actualDiscount > enrollmentData.totalFees) {
                 throw new Error('Discount cannot be greater than total fees');
             }
 
@@ -111,10 +116,10 @@ class StudentEnrollmentService {
                 course_id: enrollmentData.course_id,
                 class_id: enrollmentData.class_id,
                 section_id: enrollmentData.section_id,
-                enrollmentDate: new Date(enrollmentData.enrollmentDate),
+                enrollmentDate: actualEnrollmentDate,
                 totalFees: enrollmentData.totalFees,
-                discount: enrollmentData.discount,
-                discountType: enrollmentData.discountType || undefined,
+                discount: actualDiscount,
+                discountType: actualDiscountType,
                 netFees: enrollmentData.netFees,
                 remarks: enrollmentData.remarks || undefined,
                 createdBy: enrollmentData.createdBy,
