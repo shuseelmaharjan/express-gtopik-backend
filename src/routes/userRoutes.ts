@@ -49,6 +49,11 @@ router.post('/v1/users/upload-profile-picture', AuthMiddleware.authenticateToken
 	UploadController.uploadProfile(req, res);
 });
 
-
+/**
+ * @route GET /api/V1/users/:id/all-information
+ * @desc Get all user information by ID
+ * @access Private
+ */
+router.get('/v1/users/:id/all-information', AuthMiddleware.authenticateToken, UserController.getUserAllInformationById);
 
 export default router;
