@@ -253,4 +253,30 @@ export class UserController{
         }
     }
 
+    //get all user informations as kundali
+    static async getUserAllInformationById(req: Request, res: Response){
+        try{
+            const userId = Number(req.params.id);
+            if(isNaN(userId)){
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+                return;
+            }
+            const userInfo = await UserService.getUserAllInformationById(userId);
+            res.status(200).json({
+                success: true,
+                message: 'User information fetched successfully',
+                data: userInfo
+            });
+        } catch (error: any) {
+            console.error('Error in getUserAllInformationById controller:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to fetch user information'
+            });
+        }
+    }
+
 }

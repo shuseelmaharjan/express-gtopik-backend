@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateUniqueFileName } from '../utils/fileNameHelper';
 import FeeStructure from "../models/FeeStructure";
+import { create } from "domain";
 
 export class UserService {
     // get user's username, email, role and profile by id
@@ -690,6 +691,230 @@ export class UserService {
 
         } catch (error) {
             console.error("Error searching enrolled students with enrollment info:", error);
+            throw error;
+        }
+    }
+
+    //get user all info by id
+    static async getUserAllInformationById(id: number){
+        try{
+            const user = await User.findByPk(id);
+            if(!user){
+                throw new Error("User not found");
+            }
+            //personal info includes
+            const personalInfo = {
+                id: user.id,
+                name: [user.firstName, user.middleName, user.lastName].filter(n => n).join(' '),
+                email: user.email,
+                username: user.username,
+                role: user.role,
+                profile: user.profile,
+                dateOfBirth: user.dateOfBirth,
+                sex: user.sex,
+
+
+            }
+            // guardian info includes
+            const guardianInfo = {
+                fatherName: user.fatherName,
+                motherName: user.motherName,
+                grandfatherName: user.grandfatherName,
+                grandmotherName: user.grandmotherName,
+                guardianName: user.guardianName,
+                guardianContact: user.guardianContact,
+                fatherNumber: user.fatherNumber,
+                motherNumber: user.motherNumber,
+                emergencyContact: user.emergencyContact,
+            }
+
+            // address info includes
+            const addressInfo = {
+                country: user.country,
+                permanentState: user.permanentState,
+                permanentCity: user.permanentCity,
+                permanentLocalGovernment: user.permanentLocalGovernment,
+                permanentWardNumber: user.permanentWardNumber,
+                permanentTole: user.permanentTole,
+                permanentPostalCode: user.permanentPostalCode,
+                tempState: user.tempState,
+                tempCity: user.tempCity,
+                tempLocalGovernment: user.tempLocalGovernment,
+                tempWardNumber: user.tempWardNumber,
+                tempTole: user.tempTole,
+                tempPostalCode: user.tempPostalCode,
+            }
+
+            // account status includes
+            const accountStatus = {
+                status: user.status,
+                isActive: user.isActive,
+                leftDate: user.leftDate,
+                graduatedDate: user.graduatedDate,
+                leaveReason: user.leaveReason,
+            }
+
+            let updatedByUser = null;
+            let createdByUser = null;
+
+            if(user.updatedBy != null){
+                updatedByUser = await UserHelper.getUserFullNameById(user.updatedBy);
+            }
+            if(user.createdBy != null){
+                createdByUser = await UserHelper.getUserFullNameById(user.createdBy);
+            }
+            // account created and updated info
+            const accountCreatedUpdatedInfo = {
+                createdAt: user.createdAt,
+                createdBy: createdByUser,
+                updatedBy: updatedByUser,
+                updatedAt: user.updatedAt,
+            }
+
+            const userDocuments = await Document.findAll({
+                where: { user_id: user.id },
+            });
+
+            const userDocumentInfo = await Promise.all(
+                userDocuments.map(async (doc) => {
+                    const docData = doc.get({ plain: true }) as any;
+                    let docCreatedBy = null;
+                    let docUpdatedBy = null;
+
+                    if (docData.createdBy != null) {
+                        docCreatedBy = await UserHelper.getUserFullNameById(docData.createdBy);
+                    }
+                    if (docData.updatedBy != null) {
+                        docUpdatedBy = await UserHelper.getUserFullNameById(docData.updatedBy);
+                    }
+
+                    return {
+                        id: docData.id,
+                        document: docData.document,
+                        type: docData.type,
+                        createdAt: docData.createdAt,
+                        updatedAt: docData.updatedAt,
+                        createdBy: docCreatedBy,
+                        updatedBy: docUpdatedBy,
+                    };
+                })
+            );
+
+            const userActiveEnrollments = await StudentEnrollment.findAll({
+                where: { user_id: user.id, isActive: true },
+                include: [
+                    { model: Department, as: 'department', attributes: ['id', 'departmentName'] },
+                    { model: Class, as: 'class', attributes: ['id', 'className'] },
+                    { model: ClassSection, as: 'section', attributes: ['id', 'sectionName'] },
+                ]
+            });
+            
+            const enrollmentInfo = await Promise.all(
+                userActiveEnrollments.map(async (enrollment) => {
+                    const enrollmentData = enrollment.get({ plain: true }) as any;
+                    let enrollmentCreatedBy = null;
+                    let enrollmentUpdatedBy = null;
+
+                    if (enrollmentData.createdBy != null) {
+                        enrollmentCreatedBy = await UserHelper.getUserFullNameById(enrollmentData.createdBy);
+                    }
+                    if (enrollmentData.updatedBy != null) {
+                        enrollmentUpdatedBy = await UserHelper.getUserFullNameById(enrollmentData.updatedBy);
+                    }
+
+                    return {
+                        id: enrollmentData.id,
+                        user_id: enrollmentData.user_id,
+                        department_id: enrollmentData.department_id,
+                        department: enrollmentData.department ? {
+                            id: enrollmentData.department.id,
+                            departmentName: enrollmentData.department.departmentName
+                        } : null,
+                        course_id: enrollmentData.course_id,
+                        class_id: enrollmentData.class_id,
+                        class: enrollmentData.class ? {
+                            id: enrollmentData.class.id,
+                            className: enrollmentData.class.className
+                        } : null,
+                        section_id: enrollmentData.section_id,
+                        section: enrollmentData.section ? {
+                            id: enrollmentData.section.id,
+                            sectionName: enrollmentData.section.sectionName
+                        } : null,
+                        enrollmentDate: enrollmentData.enrollmentDate,
+                        totalFees: enrollmentData.totalFees,
+                        discount: enrollmentData.discount,
+                        discountType: enrollmentData.discountType,
+                        netFees: enrollmentData.netFees,
+                        createdBy: enrollmentCreatedBy,
+                        updatedBy: enrollmentUpdatedBy,
+                        createdAt: enrollmentData.createdAt,
+                        updatedAt: enrollmentData.updatedAt,
+                        isActive: enrollmentData.isActive,
+                        remarks: enrollmentData.remarks
+                    };
+                })
+            );
+
+            const userInActiveEnrollments = await StudentEnrollment.findAll({
+                where: { user_id: user.id, isActive: false },
+                include: [
+                    { model: Department, as: 'department', attributes: ['id', 'departmentName'] },
+                    { model: Class, as: 'class', attributes: ['id', 'className'] },
+                    { model: ClassSection, as: 'section', attributes: ['id', 'sectionName'] },
+                ]
+            });
+            const inactiveEnrollmentInfo = await Promise.all(
+                userInActiveEnrollments.map(async (enrollment) => {
+                    const enrollmentData = enrollment.get({ plain: true }) as any;
+                    let enrollmentCreatedBy = null;
+                    let enrollmentUpdatedBy = null;
+
+                    if (enrollmentData.createdBy != null) {
+                        enrollmentCreatedBy = await UserHelper.getUserFullNameById(enrollmentData.createdBy);
+                    }
+                    if (enrollmentData.updatedBy != null) {
+                        enrollmentUpdatedBy = await UserHelper.getUserFullNameById(enrollmentData.updatedBy);
+                    }
+
+                    return {
+                        id: enrollmentData.id,
+                        user_id: enrollmentData.user_id,
+                        department_id: enrollmentData.department_id,
+                        department: enrollmentData.department ? {
+                            id: enrollmentData.department.id,
+                            departmentName: enrollmentData.department.departmentName
+                        } : null,
+                        course_id: enrollmentData.course_id,
+                        class_id: enrollmentData.class_id,
+                        class: enrollmentData.class ? {
+                            id: enrollmentData.class.id,
+                            className: enrollmentData.class.className
+                        } : null,
+                        section_id: enrollmentData.section_id,
+                        section: enrollmentData.section ? {
+                            id: enrollmentData.section.id,
+                            sectionName: enrollmentData.section.sectionName
+                        } : null,
+                        enrollmentDate: enrollmentData.enrollmentDate,
+                        totalFees: enrollmentData.totalFees,
+                        discount: enrollmentData.discount,
+                        discountType: enrollmentData.discountType,
+                        netFees: enrollmentData.netFees,
+                        createdBy: enrollmentCreatedBy,
+                        updatedBy: enrollmentUpdatedBy,
+                        createdAt: enrollmentData.createdAt,
+                        updatedAt: enrollmentData.updatedAt,
+                        isActive: enrollmentData.isActive,
+                        remarks: enrollmentData.remarks
+                    };
+                })
+            );
+
+            return { personalInfo, guardianInfo, addressInfo, accountStatus, accountCreatedUpdatedInfo, userDocumentInfo, enrollmentInfo, inactiveEnrollmentInfo };
+
+        } catch (error) {
+            console.error("Error fetching user by ID:", error);
             throw error;
         }
     }
