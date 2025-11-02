@@ -112,9 +112,11 @@ export class UserController{
             
             // Extract files from request
             const files = (req as any).files || {};
-            
+                        console.log("Received Data:", req.body);
+
             // Create user with documents
             const result = await UserService.createUserWithDocuments(req.body, files, Number(createdBy));
+
             
             res.status(201).json({
                 success: true,
@@ -275,6 +277,54 @@ export class UserController{
             res.status(500).json({
                 success: false,
                 message: error.message || 'Failed to fetch user information'
+            });
+        }
+    }
+
+    // Get enrolled students by class with optional section filter
+    static async getEnrolledStudentsByClass(req: Request, res: Response): Promise<void> {
+        try {
+            const classId = parseInt(req.params.classId);
+            const sectionId = req.query.sectionId ? parseInt(req.query.sectionId as string) : undefined;
+
+            // Validate classId
+            if (!classId || isNaN(classId)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Valid class ID is required'
+                });
+                return;
+            }
+
+            // Validate sectionId if provided
+            if (sectionId !== undefined && isNaN(sectionId)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid section ID format'
+                });
+                return;
+            }
+
+            const result = await UserService.getEnrolledStudentsByClass(classId, sectionId);
+            
+            res.status(200).json({
+                success: true,
+                message: `Enrolled students for class ${classId}${sectionId ? ` and section ${sectionId}` : ''} fetched successfully`,
+                data: {
+                    students: result.students,
+                    total: result.students.length,
+                    availableSections: result.availableSections,
+                    filters: {
+                        classId: classId,
+                        sectionId: sectionId || null
+                    }
+                }
+            });
+        } catch (error: any) {
+            console.error('Error in getEnrolledStudentsByClass controller:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to fetch enrolled students by class'
             });
         }
     }

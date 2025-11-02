@@ -160,6 +160,7 @@ export class UserService {
      * Supports both 'new' and 'transferred' admission types with different document requirements
      */
     static async createUserWithDocuments(payload: any, files: any, createdBy: number) {
+        console.log("Payload Data:", payload);
         const required = ['firstName', 'lastName', 'email', 'role', 'sex', 'admissionType'];
         const missing = required.filter(f => !payload[f]);
         if (missing.length) {
@@ -919,4 +920,172 @@ export class UserService {
         }
     }
 
+    static async getUsersByClassId(classId: number): Promise<any[]> {
+        try{
+            const students = await StudentEnrollment.findAll({
+                where: {
+                    class_id: classId,
+                    isActive: true
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'student',
+                        attributes: ['id', 'firstName', 'middleName', 'lastName', 'username', 'profile']
+                    }
+                ]
+            });
+            return students.map(enrollment => {
+                const enrollmentData = enrollment.get({ plain: true }) as any;
+                const studentData = enrollmentData.student;
+                return {
+                    id: studentData.id,
+                    name: [studentData.firstName, studentData.middleName, studentData.lastName].filter(n => n).join(' '),
+                    username: studentData.username,
+                    profile: studentData.profile
+                };
+            });
+        } catch (error) {
+            console.error("Error fetching users by class ID:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get enrolled students with detailed enrollment info filtered by classId and optionally by sectionId
+     * Returns data similar to getEnrolledStudentsWithEnrollmentInfo but filtered by class
+     * Also returns available sections for the class
+     * @param classId - Required class ID to filter by
+     * @param sectionId - Optional section ID to further filter results
+     */
+    static async getEnrolledStudentsByClass(classId: number, sectionId?: number): Promise<any> {
+        try {
+            // First, get all available sections for this class
+            const availableSections = await ClassSection.findAll({
+                where: {
+                    class_id: classId,
+                    isActive: true
+                },
+                attributes: ['id', 'sectionName'],
+                order: [['sectionName', 'ASC']]
+            });
+
+            // Build where condition for StudentEnrollment
+            const enrollmentWhere: any = {
+                class_id: classId,
+                isActive: true
+            };
+
+            // Add section filter if provided
+            if (sectionId) {
+                enrollmentWhere.section_id = sectionId;
+            }
+
+            const enrolledStudents = await User.findAll({
+                where: {
+                    role: 'student',
+                    status: 'Enrolled',
+                    isActive: true
+                },
+                attributes: [
+                    'id', 'firstName', 'middleName', 'lastName', 'username', 
+                    'dateOfBirth', 'profile', 'guardianName', 'guardianContact'
+                ],
+                include: [
+                    {
+                        model: StudentEnrollment,
+                        as: 'enrollments',
+                        where: enrollmentWhere,
+                        required: true, // INNER JOIN - only users with matching enrollments
+                        attributes: [
+                            'id', 'department_id', 'course_id', 'class_id', 
+                            'section_id', 'enrollmentDate', 'totalFees', 'discount', 
+                            'discountType', 'netFees', 'remarks'
+                        ],
+                        include: [
+                            {
+                                model: Department,
+                                as: 'department',
+                                attributes: ['id', 'departmentName'],
+                                required: true
+                            },
+                            {
+                                model: Class,
+                                as: 'class',
+                                attributes: ['id', 'className'],
+                                required: true
+                            },
+                            {
+                                model: ClassSection,
+                                as: 'section',
+                                attributes: ['id', 'sectionName'],
+                                required: true
+                            }
+                        ]
+                    }
+                ],
+                order: [
+                    ['firstName', 'ASC'],
+                    ['lastName', 'ASC'],
+                    [{ model: StudentEnrollment, as: 'enrollments' }, 'enrollmentDate', 'DESC']
+                ]
+            });
+
+            // Transform the data to the required format
+            const transformedStudents = enrolledStudents.map(student => {
+                const studentData = student.get({ plain: true }) as any;
+                
+                // Combine name
+                const fullName = [
+                    studentData.firstName,
+                    studentData.middleName,
+                    studentData.lastName
+                ].filter(name => name && name.trim()).join(' ');
+
+                // Transform enrollment data
+                const enrollments = studentData.enrollments.map((enrollment: any) => ({
+                    enrollmentId: enrollment.id,
+                    departmentId: enrollment.department_id,
+                    departmentName: enrollment.department.departmentName,
+                    courseId: enrollment.course_id,
+                    classId: enrollment.class_id,
+                    className: enrollment.class.className,
+                    sectionId: enrollment.section_id,
+                    sectionName: enrollment.section.sectionName,
+                    enrollmentDate: enrollment.enrollmentDate,
+                    totalFees: enrollment.totalFees,
+                    discount: enrollment.discount,
+                    discountType: enrollment.discountType,
+                    netFees: enrollment.netFees,
+                    remarks: enrollment.remarks
+                }));
+
+                return {
+                    userId: studentData.id,
+                    name: fullName,
+                    username: studentData.username,
+                    dateOfBirth: studentData.dateOfBirth,
+                    profile: `${process.env.SERVER_URL}${studentData.profile}`,
+                    guardianName: studentData.guardianName,
+                    guardianContact: studentData.guardianContact,
+                    enrollments: enrollments
+                };
+            });
+
+            // Transform available sections
+            const sectionsData = availableSections.map(section => ({
+                sectionId: section.id,
+                sectionName: section.sectionName
+            }));
+
+            return {
+                students: transformedStudents,
+                availableSections: sectionsData
+            };
+
+        } catch (error) {
+            console.error("Error fetching enrolled students by class:", error);
+            throw error;
+        }
+    }
 }

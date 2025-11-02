@@ -56,4 +56,13 @@ router.post('/v1/users/upload-profile-picture', AuthMiddleware.authenticateToken
  */
 router.get('/v1/users/:id/all-information', AuthMiddleware.authenticateToken, UserController.getUserAllInformationById);
 
+/**
+ * @route GET /api/V1/students/enrolled-by-class/:classId
+ * @desc Get enrolled students with detailed enrollment info filtered by classId and optionally by sectionId
+ * @access Private (Admin/Superadmin)
+ * @param classId - Required class ID
+ * @query sectionId - Optional section ID for additional filtering
+ */
+router.get('/v1/students/enrolled-by-class/:classId', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getEnrolledStudentsByClass);
+
 export default router;
