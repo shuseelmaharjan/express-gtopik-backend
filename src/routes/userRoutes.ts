@@ -59,10 +59,36 @@ router.get('/v1/users/:id/all-information', AuthMiddleware.authenticateToken, Us
 /**
  * @route GET /api/V1/students/enrolled-by-class/:classId
  * @desc Get enrolled students with detailed enrollment info filtered by classId and optionally by sectionId
- * @access Private (Admin/Superadmin)
+ * @access private
+ * @roles admin, superadmin
  * @param classId - Required class ID
  * @query sectionId - Optional section ID for additional filtering
  */
 router.get('/v1/students/enrolled-by-class/:classId', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, UserController.getEnrolledStudentsByClass);
+
+
+/**
+ * @route PUT /api/v1/update-email-or-dob/:id
+ * @desc Update user's email or date of birth
+ * @access Private
+ */
+router.put(
+  '/v1/update-email-or-dob/:id',
+  AuthMiddleware.authenticateToken,
+  AuthMiddleware.requireAdminstration,
+  UserController.updateUserEmailOrDOB
+);
+
+/**
+ * @route PUT /api/v1/users/update-guardian-info/:id
+ * @desc Update user's guardian information
+ * @access Private
+ */
+router.put(
+  '/v1/users/update-guardian-info/:id',
+  AuthMiddleware.authenticateToken,
+  AuthMiddleware.requireAdminstration,
+  UserController.updateUserGuardianInfo
+);
 
 export default router;

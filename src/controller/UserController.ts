@@ -329,4 +329,62 @@ export class UserController{
         }
     }
 
+    // update user email or dob by userId
+    static async updateUserEmailOrDOB(req: Request, res: Response): Promise<void> {
+        try{
+            const userId = Number(req.params.id);
+            const { email, dob } = req.body;
+
+            if(isNaN(userId)){
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+                return;
+            }
+
+            const updatedUser = await UserService.updateUserEmailAndDOB(userId, email, dob);
+            res.status(200).json({
+                success: true,
+                message: "User email or DOB updated successfully",
+                data: updatedUser
+            });
+        }catch(error: any){
+            console.error("Error in updateUserEmailOrDOB controller:", error);
+            res.status(500).json({
+                success: false,
+                message: error.message || "Failed to update user email or DOB"
+            });
+        }
+    }
+
+    // update user guardian info by userId
+    static async updateUserGuardianInfo(req: Request, res: Response): Promise<void> {
+        try{
+            const userId = Number(req.params.id);
+            const guardianInfo = req.body;
+
+            if(isNaN(userId)){
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+                return;
+            }
+
+            const updatedUser = await UserService.updateUserGuardianInfo(userId, guardianInfo);
+            res.status(200).json({
+                success: true,
+                message: "User guardian information updated successfully",
+                data: updatedUser
+            });
+        }catch(error: any){
+            console.error("Error in updateUserGuardianInfo controller:", error);
+            res.status(500).json({
+                success: false,
+                message: error.message || "Failed to update user guardian information"
+            });
+        }
+    }
+
 }
