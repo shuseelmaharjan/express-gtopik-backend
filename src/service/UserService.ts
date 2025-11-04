@@ -1088,4 +1088,62 @@ export class UserService {
             throw error;
         }
     }
+
+    /**
+     * Update user email and dateorbirth by user ID
+     * @param userId - ID of the user to update
+     * @param email - New email address
+     * @param dateOfBirth - New date of birth
+     */
+    static async updateUserEmailAndDOB(userId: number, email: string, dateOfBirth: Date): Promise<void> {
+        try{
+            const user = await User.findByPk(userId);
+            if(!user){
+                throw new Error("User not found");
+            }
+            user.email = email;
+            user.dateOfBirth = dateOfBirth;
+            await user.save();
+        }catch (error){
+            console.error("Error updating user email and date of birth:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * update user fatherName, motherName, grandFatherName, grandMotherName, guardianName, guardianContact, fatherNumber, motherNumber
+     * @param userId - ID of the user to update
+     * @param guardianInfo - Object containing guardian information to update
+     */
+    static async updateUserGuardianInfo(userId: number, guardianInfo: any): Promise<any> {
+        try {
+            const user = await User.findByPk(userId);
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            // Only update fields explicitly provided in guardianInfo
+            const allowed = [
+                'fatherName', 'motherName', 'grandfatherName', 'grandmotherName',
+                'guardianName', 'guardianContact', 'fatherNumber', 'motherNumber', 'emergencyContact'
+            ];
+
+            for (const key of allowed) {
+                if (Object.prototype.hasOwnProperty.call(guardianInfo, key) && guardianInfo[key] !== undefined) {
+                    (user as any)[key] = guardianInfo[key];
+                }
+            }
+
+            user.updatedAt = new Date();
+            await user.save();
+
+            const plain = user.get({ plain: true }) as any;
+            // sanitize password
+            plain.password = undefined;
+            return plain;
+        } catch (error) {
+            console.error("Error updating user guardian information:", error);
+            throw error;
+        }
+    }
 }
