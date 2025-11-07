@@ -387,4 +387,33 @@ export class UserController{
         }
     }
 
+    // update user address info by userId
+    static async updateUserAddressInfo(req: Request, res: Response): Promise<void> {
+        try{
+            const userId = Number(req.params.id);
+            const addressInfo = req.body;
+
+            if(isNaN(userId)){
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid user ID"
+                });
+                return;
+            }
+
+            const updatedUser = await UserService.updateUserAddressInfo(userId, addressInfo);
+            res.status(200).json({
+                success: true,
+                message: "User address information updated successfully",
+                data: updatedUser
+            });
+        }catch(error: any){
+            console.error("Error in updateUserAddressInfo controller:", error);
+            res.status(500).json({
+                success: false,
+                message: error.message || "Failed to update user address information"
+            });
+        }
+    }
+
 }

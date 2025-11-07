@@ -1146,4 +1146,43 @@ export class UserService {
             throw error;
         }
     }
+
+    /**
+     * Update user address information
+     * @param userId - ID of the user to update
+     * @param addressInfo - Object containing address information to update
+     */
+    static async updateUserAddressInfo(userId: number, addressInfo: any): Promise<any> {
+        try {
+            const user = await User.findByPk(userId);
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            // Only update fields explicitly provided in addressInfo
+            const allowed = [
+                'country', 'permanentState', 'permanentCity', 'permanentLocalGovernment',
+                'permanentWardNumber', 'permanentTole', 'permanentPostalCode',
+                'tempState', 'tempCity', 'tempLocalGovernment', 'tempWardNumber',
+                'tempTole', 'tempPostalCode'
+            ];
+
+            for (const key of allowed) {
+                if (Object.prototype.hasOwnProperty.call(addressInfo, key) && addressInfo[key] !== undefined) {
+                    (user as any)[key] = addressInfo[key];
+                }
+            }
+
+            user.updatedAt = new Date();
+            await user.save();
+
+            const plain = user.get({ plain: true }) as any;
+            // sanitize password
+            plain.password = undefined;
+            return plain;
+        } catch (error) {
+            console.error("Error updating user address information:", error);
+            throw error;
+        }
+    }
 }

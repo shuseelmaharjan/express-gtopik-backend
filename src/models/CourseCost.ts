@@ -43,7 +43,7 @@ CourseCost.init(
             allowNull: false
         },
         course_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER.UNSIGNED,
             allowNull: false
         },
         createdBy: {

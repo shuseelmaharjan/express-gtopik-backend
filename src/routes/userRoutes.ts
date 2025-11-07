@@ -91,4 +91,16 @@ router.put(
   UserController.updateUserGuardianInfo
 );
 
+/**
+ * @route PUT /api/v1/users/update-address-info/:id
+ * @desc Update user's address information
+ * @access Private
+ */
+router.put(
+  '/v1/users/update-address-info/:id',
+  AuthMiddleware.authenticateToken,
+  AuthMiddleware.requireAdminstration,
+  UserController.updateUserAddressInfo
+);
+
 export default router;
