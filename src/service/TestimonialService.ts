@@ -1,6 +1,6 @@
 import Testimonial from '../models/Testimonials';
-import { Op } from 'sequelize';
 import User from '../models/User';
+import { UserHelper } from '../utils/userHelper';
 
 class TestimonialService {
     // Create a new Testimonial
@@ -9,7 +9,6 @@ class TestimonialService {
         position: string,
         image: string,
         message: string,
-        isActive: boolean,
         createdBy: string
     ) {
         try {
@@ -24,7 +23,7 @@ class TestimonialService {
                 position: position.trim(),
                 image,
                 message: message.trim(),
-                isActive,
+                isActive: true,  // Always set to true by default
                 createdBy,
                 updatedBy: null
             });
@@ -45,7 +44,25 @@ class TestimonialService {
                 },
                 order: [['createdAt', 'DESC']]
             });
-            return testimonials;
+
+            // Enhance each testimonial with creator and updater information
+            const enhancedTestimonials = await Promise.all(
+                testimonials.map(async (testimonial) => {
+                    const createdByUser = await UserHelper.getUserFullNameById(parseInt(testimonial.createdBy));
+                    const updatedByUser = testimonial.updatedBy 
+                        ? await UserHelper.getUserFullNameById(parseInt(testimonial.updatedBy))
+                        : null;
+
+                    return {
+                        ...testimonial.toJSON(),
+                        image: `${process.env.SERVER_URL}${testimonial.image}`,
+                        createdByUser: createdByUser,
+                        updatedByUser: updatedByUser
+                    };
+                })
+            );
+
+            return enhancedTestimonials;
         } catch (error) {
             console.error('Error in getAllActiveTestimonials service:', error);
             throw error;
@@ -58,7 +75,25 @@ class TestimonialService {
             const testimonials = await Testimonial.findAll({
                 order: [['createdAt', 'DESC']]
             });
-            return testimonials;
+
+            // Enhance each testimonial with creator and updater information
+            const enhancedTestimonials = await Promise.all(
+                testimonials.map(async (testimonial) => {
+                    const createdByUser = await UserHelper.getUserFullNameById(parseInt(testimonial.createdBy));
+                    const updatedByUser = testimonial.updatedBy 
+                        ? await UserHelper.getUserFullNameById(parseInt(testimonial.updatedBy))
+                        : null;
+
+                    return {
+                        ...testimonial.toJSON(),
+                        image: `${process.env.SERVER_URL}${testimonial.image}`,
+                        createdByUser: createdByUser,
+                        updatedByUser: updatedByUser
+                    };
+                })
+            );
+
+            return enhancedTestimonials;
         } catch (error) {
             console.error('Error in getAllTestimonials service:', error);
             throw error;
@@ -72,7 +107,20 @@ class TestimonialService {
             if (!testimonial) {
                 throw new Error('Testimonial not found');
             }
-            return testimonial;
+
+            // Get creator and updater full names
+            const createdByUser = await UserHelper.getUserFullNameById(parseInt(testimonial.createdBy));
+            const updatedByUser = testimonial.updatedBy 
+                ? await UserHelper.getUserFullNameById(parseInt(testimonial.updatedBy))
+                : null;
+
+            // Return testimonial with full name information and full image URL
+            return {
+                ...testimonial.toJSON(),
+                image: `${process.env.SERVER_URL}${testimonial.image}`,
+                createdByUser: createdByUser,
+                updatedByUser: updatedByUser
+            };
         } catch (error) {
             console.error('Error in getTestimonialById service:', error);
             throw error;
@@ -86,7 +134,6 @@ class TestimonialService {
         position?: string,
         image?: string,
         message?: string,
-        isActive?: boolean,
         updatedBy?: string
     ) {
         try {
@@ -111,12 +158,23 @@ class TestimonialService {
             if (position !== undefined) updateData.position = position.trim();
             if (image !== undefined) updateData.image = image;
             if (message !== undefined) updateData.message = message.trim();
-            if (isActive !== undefined) updateData.isActive = isActive;
+            // Remove isActive handling - it stays as is
             if (updatedBy !== undefined) updateData.updatedBy = updatedBy;
 
             await existingTestimonial.update(updateData);
 
-            return existingTestimonial;
+            // Get creator and updater full names for return
+            const createdByUser = await UserHelper.getUserFullNameById(parseInt(existingTestimonial.createdBy));
+            const updatedByUser = existingTestimonial.updatedBy 
+                ? await UserHelper.getUserFullNameById(parseInt(existingTestimonial.updatedBy))
+                : null;
+
+            return {
+                ...existingTestimonial.toJSON(),
+                image: `${process.env.SERVER_URL}${existingTestimonial.image}`,
+                createdByUser: createdByUser,
+                updatedByUser: updatedByUser
+            };
         } catch (error) {
             console.error('Error in updateTestimonial service:', error);
             throw error;

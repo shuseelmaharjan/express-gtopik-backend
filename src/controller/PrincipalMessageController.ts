@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import TestimonialService from '../service/TestimonialService';
+import PrincipalMessageService from '../service/PrincipalMessageService';
 import UidHelper from '../utils/uidHelper';
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +8,7 @@ import { generateUniqueFileName } from '../utils/fileNameHelper';
 
 // Max 5MB
 const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png']);
 
 interface FileLike {
     name: string;
@@ -21,21 +21,21 @@ interface FilesLike {
     [k: string]: FileLike;
 }
 
-class TestimonialController {
-    // Create a new testimonial
-    static async createTestimonial(req: Request, res: Response): Promise<void> {
+class PrincipalMessageController {
+    // Create a new principal message
+    static async createPrincipalMessage(req: Request, res: Response): Promise<void> {
         try {
             const files = (req as any).files as FilesLike | undefined;
-            if (!files || !files.image) {
+            if (!files || !files.profilePicture) {
                 res.status(400).json({
                     success: false,
-                    message: "Image file is required"
+                    message: "Profile picture file is required"
                 });
                 return;
             }
 
-            const file = files.image as FileLike;
-            const { name, position, message } = req.body;
+            const file = files.profilePicture as FileLike;
+            const { principalName, message } = req.body;
             const createdBy = UidHelper.getUserId(req.headers);
 
             if (!createdBy) {
@@ -47,18 +47,10 @@ class TestimonialController {
             }
 
             // Validate required fields
-            if (!name || typeof name !== 'string' || name.trim().length === 0) {
+            if (!principalName || typeof principalName !== 'string' || principalName.trim().length === 0) {
                 res.status(400).json({
                     success: false,
-                    message: "Name is required and must be a non-empty string"
-                });
-                return;
-            }
-
-            if (!position || typeof position !== 'string' || position.trim().length === 0) {
-                res.status(400).json({
-                    success: false,
-                    message: "Position is required and must be a non-empty string"
+                    message: "Principal name is required and must be a non-empty string"
                 });
                 return;
             }
@@ -85,13 +77,13 @@ class TestimonialController {
             if (!ALLOWED_EXTENSIONS.has(ext)) {
                 res.status(400).json({
                     success: false,
-                    message: 'Only image files (jpg, jpeg, png, gif, bmp, tiff) are allowed'
+                    message: 'Only image files (jpg, jpeg, png) are allowed'
                 });
                 return;
             }
 
             // Ensure upload directory exists
-            const baseDir = path.join(__dirname, '..', 'uploads', 'testimonials');
+            const baseDir = path.join(__dirname, '..', 'uploads', 'profile');
             fs.mkdirSync(baseDir, { recursive: true });
 
             // Generate unique filename with .webp extension
@@ -123,23 +115,22 @@ class TestimonialController {
                 .toFile(finalPath);
 
             // Store relative path for client consumption
-            const storedPath = `/uploads/testimonials/${uniqueName}`;
+            const storedPath = `/uploads/profile/${uniqueName}`;
 
-            const newTestimonial = await TestimonialService.createTestimonial(
-                name,
-                position,
-                storedPath,
+            const newPrincipalMessage = await PrincipalMessageService.createPrincipalMessage(
+                principalName,
                 message,
+                storedPath,
                 createdBy
             );
 
             res.status(201).json({
                 success: true,
-                message: "Testimonial created successfully",
-                data: newTestimonial
+                message: "Principal message created successfully",
+                data: newPrincipalMessage
             });
         } catch (error) {
-            console.error("Error in createTestimonial controller:", error);
+            console.error("Error in createPrincipalMessage controller:", error);
             res.status(500).json({
                 success: false,
                 message: error instanceof Error ? error.message : "Internal server error"
@@ -147,76 +138,41 @@ class TestimonialController {
         }
     }
 
-    // Get all active testimonials
-    static async getAllActiveTestimonials(req: Request, res: Response): Promise<void> {
+    // Get the principal message
+    static async getPrincipalMessage(req: Request, res: Response): Promise<void> {
         try {
-            const testimonials = await TestimonialService.getAllActiveTestimonials();
-            res.status(200).json({
-                success: true,
-                message: "Active testimonials fetched successfully",
-                data: testimonials
-            });
-        } catch (error) {
-            console.error("Error in getAllActiveTestimonials controller:", error);
-            res.status(500).json({
-                success: false,
-                message: "Internal server error"
-            });
-        }
-    }
-
-    // Get all testimonials (including inactive)
-    static async getAllTestimonials(req: Request, res: Response): Promise<void> {
-        try {
-            const testimonials = await TestimonialService.getAllTestimonials();
-            res.status(200).json({
-                success: true,
-                message: "All testimonials fetched successfully",
-                data: testimonials
-            });
-        } catch (error) {
-            console.error("Error in getAllTestimonials controller:", error);
-            res.status(500).json({
-                success: false,
-                message: "Internal server error"
-            });
-        }
-    }
-
-    // Get testimonial by ID
-    static async getTestimonialById(req: Request, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-
-            if (isNaN(parseInt(id))) {
-                res.status(400).json({
-                    success: false,
-                    message: "Invalid testimonial ID"
+            const principalMessage = await PrincipalMessageService.getPrincipalMessage();
+            
+            if (!principalMessage) {
+                // No record found, but still return success: true with data: null
+                res.status(200).json({
+                    success: true,
+                    message: "No principal message found",
+                    data: null
                 });
                 return;
             }
 
-            const testimonial = await TestimonialService.getTestimonialById(parseInt(id));
             res.status(200).json({
                 success: true,
-                message: "Testimonial fetched successfully",
-                data: testimonial
+                message: "Principal message fetched successfully",
+                data: principalMessage
             });
         } catch (error) {
-            console.error("Error in getTestimonialById controller:", error);
-            res.status(404).json({
+            console.error("Error in getPrincipalMessage controller:", error);
+            res.status(500).json({
                 success: false,
-                message: error instanceof Error ? error.message : "Testimonial not found"
+                message: "Internal server error"
             });
         }
     }
 
-    // Update testimonial
-    static async updateTestimonial(req: Request, res: Response): Promise<void> {
+    // Update principal message
+    static async updatePrincipalMessage(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
             const files = (req as any).files as FilesLike | undefined;
-            const { name, position, message } = req.body;
+            const { principalName, message } = req.body;
             const updatedBy = UidHelper.getUserId(req.headers);
 
             if (!updatedBy) {
@@ -230,16 +186,16 @@ class TestimonialController {
             if (isNaN(parseInt(id))) {
                 res.status(400).json({
                     success: false,
-                    message: "Invalid testimonial ID"
+                    message: "Invalid principal message ID"
                 });
                 return;
             }
 
-            let imagePath: string | undefined = undefined;
+            let profilePicturePath: string | undefined = undefined;
 
             // If a new file is uploaded, process it
-            if (files && files.image) {
-                const file = files.image as FileLike;
+            if (files && files.profilePicture) {
+                const file = files.profilePicture as FileLike;
 
                 // Validate file size
                 if (file.size > MAX_SIZE) {
@@ -255,13 +211,13 @@ class TestimonialController {
                 if (!ALLOWED_EXTENSIONS.has(ext)) {
                     res.status(400).json({
                         success: false,
-                        message: 'Only image files (jpg, jpeg, png, gif, bmp, tiff) are allowed'
+                        message: 'Only image files (jpg, jpeg, png) are allowed'
                     });
                     return;
                 }
 
                 // Ensure upload directory exists
-                const baseDir = path.join(__dirname, '..', 'uploads', 'testimonials');
+                const baseDir = path.join(__dirname, '..', 'uploads', 'profile');
                 fs.mkdirSync(baseDir, { recursive: true });
 
                 // Generate unique filename with .webp extension
@@ -293,13 +249,15 @@ class TestimonialController {
                     .toFile(finalPath);
 
                 // Store relative path
-                imagePath = `/uploads/testimonials/${uniqueName}`;
+                profilePicturePath = `/uploads/profile/${uniqueName}`;
 
                 // Optional: Delete old image file
                 try {
-                    const existingTestimonial = await TestimonialService.getTestimonialById(parseInt(id));
-                    if (existingTestimonial && existingTestimonial.image) {
-                        const oldFilePath = path.join(__dirname, '..', existingTestimonial.image);
+                    const existingPrincipalMessage = await PrincipalMessageService.getPrincipalMessage();
+                    if (existingPrincipalMessage && existingPrincipalMessage.profilePicture) {
+                        // Extract the path part without SERVER_URL
+                        const oldPath = existingPrincipalMessage.profilePicture.replace(process.env.SERVER_URL || '', '');
+                        const oldFilePath = path.join(__dirname, '..', oldPath);
                         if (fs.existsSync(oldFilePath)) {
                             fs.unlinkSync(oldFilePath);
                         }
@@ -310,22 +268,21 @@ class TestimonialController {
                 }
             }
 
-            const updatedTestimonial = await TestimonialService.updateTestimonial(
+            const updatedPrincipalMessage = await PrincipalMessageService.updatePrincipalMessage(
                 parseInt(id),
-                name,
-                position,
-                imagePath,
+                principalName,
                 message,
+                profilePicturePath,
                 updatedBy
             );
 
             res.status(200).json({
                 success: true,
-                message: "Testimonial updated successfully",
-                data: updatedTestimonial
+                message: "Principal message updated successfully",
+                data: updatedPrincipalMessage
             });
         } catch (error) {
-            console.error("Error in updateTestimonial controller:", error);
+            console.error("Error in updatePrincipalMessage controller:", error);
             res.status(500).json({
                 success: false,
                 message: error instanceof Error ? error.message : "Internal server error"
@@ -333,61 +290,26 @@ class TestimonialController {
         }
     }
 
-    // Deactivate testimonial (soft delete)
-    static async deactivateTestimonial(req: Request, res: Response): Promise<void> {
-        try {
-            const { id } = req.params;
-            const updatedBy = UidHelper.getUserId(req.headers);
-
-            if (!updatedBy) {
-                res.status(400).json({
-                    success: false,
-                    message: "User ID is required in headers"
-                });
-                return;
-            }
-
-            if (isNaN(parseInt(id))) {
-                res.status(400).json({
-                    success: false,
-                    message: "Invalid testimonial ID"
-                });
-                return;
-            }
-
-            const deactivatedTestimonial = await TestimonialService.deactivateTestimonial(parseInt(id), updatedBy);
-            res.status(200).json({
-                success: true,
-                message: "Testimonial deactivated successfully",
-                data: deactivatedTestimonial
-            });
-        } catch (error) {
-            console.error("Error in deactivateTestimonial controller:", error);
-            res.status(500).json({
-                success: false,
-                message: error instanceof Error ? error.message : "Internal server error"
-            });
-        }
-    }
-
-    // Permanently delete testimonial
-    static async deleteTestimonial(req: Request, res: Response): Promise<void> {
+    // Hard delete principal message
+    static async deletePrincipalMessage(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
 
             if (isNaN(parseInt(id))) {
                 res.status(400).json({
                     success: false,
-                    message: "Invalid testimonial ID"
+                    message: "Invalid principal message ID"
                 });
                 return;
             }
 
-            // Optional: Delete image file before deleting testimonial
+            // Optional: Delete image file before deleting principal message
             try {
-                const existingTestimonial = await TestimonialService.getTestimonialById(parseInt(id));
-                if (existingTestimonial && existingTestimonial.image) {
-                    const oldFilePath = path.join(__dirname, '..', existingTestimonial.image);
+                const existingPrincipalMessage = await PrincipalMessageService.getPrincipalMessage();
+                if (existingPrincipalMessage && existingPrincipalMessage.profilePicture) {
+                    // Extract the path part without SERVER_URL
+                    const oldPath = existingPrincipalMessage.profilePicture.replace(process.env.SERVER_URL || '', '');
+                    const oldFilePath = path.join(__dirname, '..', oldPath);
                     if (fs.existsSync(oldFilePath)) {
                         fs.unlinkSync(oldFilePath);
                     }
@@ -397,14 +319,14 @@ class TestimonialController {
                 // Continue even if deletion fails
             }
 
-            const result = await TestimonialService.deleteTestimonial(parseInt(id));
+            const result = await PrincipalMessageService.deletePrincipalMessage(parseInt(id));
             res.status(200).json({
                 success: true,
                 message: result.message,
                 data: null
             });
         } catch (error) {
-            console.error("Error in deleteTestimonial controller:", error);
+            console.error("Error in deletePrincipalMessage controller:", error);
             res.status(500).json({
                 success: false,
                 message: error instanceof Error ? error.message : "Internal server error"
@@ -413,4 +335,4 @@ class TestimonialController {
     }
 }
 
-export default TestimonialController;
+export default PrincipalMessageController;

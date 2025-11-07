@@ -4,6 +4,7 @@ import sequelize from '../config/database';
 
 interface PrincipalMessageAttributes {
     id: number;
+    principalName: string;
     message: string;
     profilePicture: string;
     isActive: boolean;
@@ -17,6 +18,7 @@ type PrincipalMessageCreationAttributes = Optional<PrincipalMessageAttributes, '
 
 class PrincipalMessage extends Model<PrincipalMessageAttributes, PrincipalMessageCreationAttributes> implements PrincipalMessageAttributes {
     public id!: number;
+    public principalName!: string;
     public message!: string;
     public profilePicture!: string;
     public isActive!: boolean;
@@ -33,8 +35,12 @@ PrincipalMessage.init(
             autoIncrement: true,
             primaryKey: true
         },
+        principalName: {
+            type: DataTypes.STRING(255),
+            allowNull: false
+        },
         message: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         profilePicture: {
@@ -68,3 +74,5 @@ PrincipalMessage.init(
         tableName: 'tbl_principal_message'
     }
 );
+
+export default PrincipalMessage;

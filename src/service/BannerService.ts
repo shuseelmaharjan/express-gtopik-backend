@@ -2,6 +2,7 @@ import Banner from '../models/Banner';
 import { Op } from 'sequelize';
 import User from '../models/User';
 import sequelize from '../config/database';
+import { UserHelper } from '../utils/userHelper';
 
 class BannerService {
     // Create a new Banner
@@ -52,7 +53,24 @@ class BannerService {
                     ]
                 }
             });
-            return banners;
+
+            // Enhance each banner with creator and updater information
+            const enhancedBanners = await Promise.all(
+                banners.map(async (banner) => {
+                    const createdByUser = await UserHelper.getUserFullNameById(parseInt(banner.createdBy));
+                    const updatedByUser = banner.updatedBy 
+                        ? await UserHelper.getUserFullNameById(parseInt(banner.updatedBy))
+                        : null;
+
+                    return {
+                        ...banner.toJSON(),
+                        createdByUser: createdByUser,
+                        updatedByUser: updatedByUser
+                    };
+                })
+            );
+
+            return enhancedBanners;
         } catch (error) {
             console.error('Error in getAllActiveBanners service:', error);
             throw error;
@@ -79,7 +97,20 @@ class BannerService {
             if (!banner) {
                 throw new Error('Banner not found');
             }
-            return banner;
+
+            // Get creator and updater full names
+            const createdByUser = await UserHelper.getUserFullNameById(parseInt(banner.createdBy));
+            const updatedByUser = banner.updatedBy 
+                ? await UserHelper.getUserFullNameById(parseInt(banner.updatedBy))
+                : null;
+
+            // Return banner with full name information and full banner URL
+            return {
+                ...banner.toJSON(),
+                banner: `${process.env.SERVER_URL}${banner.banner}`,
+                createdByUser: createdByUser,
+                updatedByUser: updatedByUser
+            };
         } catch (error) {
             console.error('Error in getBannerById service:', error);
             throw error;

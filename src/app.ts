@@ -90,6 +90,7 @@ import feeStructureRoutes from './routes/feeStructureRoutes';
 import studentEnrollmentRoutes from './routes/studentEnrollmentRoutes';
 import bannerRoutes from './routes/bannerRoutes';
 import testimonialRoutes from './routes/testimonialRoutes';
+import principalRoutes from './routes/principalMessageRoutes';
 
 
 
@@ -107,5 +108,6 @@ app.use('/api', feeStructureRoutes);
 app.use('/api', studentEnrollmentRoutes);
 app.use('/api', bannerRoutes);
 app.use('/api', testimonialRoutes);
+app.use('/api', principalRoutes);
 
 export default app;
