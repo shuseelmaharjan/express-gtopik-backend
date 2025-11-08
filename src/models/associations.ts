@@ -9,6 +9,8 @@ import Document from './Documents';
 import ClassSection from './ClassSection';
 import CourseCost from './CourseCost';
 import StudentEnrollment from './StudentEnrollment';
+import Gallery from './Gallery';
+import GalleryGroup from './GalleryGroup';
 
 // Faculty - Department associations
 Faculty.hasMany(Department, {
@@ -149,6 +151,17 @@ ClassSection.hasMany(StudentEnrollment, {
   as: 'enrollments'
 });
 
+// Gallery - GalleryGroup associations
+GalleryGroup.hasMany(Gallery, {
+  foreignKey: 'imageGroup',
+  as: 'galleries'
+});
+
+Gallery.belongsTo(GalleryGroup, {
+  foreignKey: 'imageGroup',
+  as: 'galleryGroup'
+});
+
 // You can add more associations here as needed
 // For example, if you have other relationships:
 // Faculty.hasMany(User, { foreignKey: 'facultyId', as: 'users' });
@@ -165,5 +178,7 @@ export {
   Document,
   ClassSection,
   CourseCost,
-  StudentEnrollment
+  StudentEnrollment,
+  Gallery,
+  GalleryGroup
 };

@@ -1,55 +1,54 @@
 import {DataTypes, Model, Optional} from 'sequelize';
 import sequelize from '../config/database';
 
-interface GalleryAttributes {
+interface GalleryGroupAttributes {
     id: number;
-    image: string;
-    imageGroup: number;
+    name: string;
+    description: string | null;
+    isActive: boolean;
     createdBy: string;
     updatedBy: string | null;
     createdAt: Date;
     updatedAt: Date | null;
 }
+type GalleryGroupCreationAttributes = Optional<GalleryGroupAttributes, 'id' | 'description' | 'createdAt' | 'updatedAt'>;
 
-type GalleryCreationAttributes = Optional<GalleryAttributes, 'id' | 'createdAt' | 'updatedAt'>;
-
-class Gallery extends Model<GalleryAttributes, GalleryCreationAttributes> implements GalleryAttributes {
+class GalleryGroup extends Model<GalleryGroupAttributes, GalleryGroupCreationAttributes> implements GalleryGroupAttributes {
     public id!: number;
-    public image!: string;
-    public imageGroup!: number;
+    public name!: string;
+    public description!: string | null;
+    public isActive!: boolean; 
     public createdBy!: string;
     public updatedBy!: string | null;
     public createdAt!: Date;
     public updatedAt!: Date | null;
 }
-
-Gallery.init(
+GalleryGroup.init(
     {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
-        image: {
-            type: DataTypes.STRING,
+        name: {
+            type: DataTypes.STRING(255),
             allowNull: false
         },
-        imageGroup: {
-            type: DataTypes.INTEGER,
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        isActive: {
+            type: DataTypes.BOOLEAN,
             allowNull: false,
-            references: {
-                model: 'tbl_gallery_groups',
-                key: 'id'
-            },
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE'
+            defaultValue: true
         },
         createdBy: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(255),
             allowNull: false
         },
         updatedBy: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(255),
             allowNull: true
         },
         createdAt: {
@@ -64,8 +63,9 @@ Gallery.init(
     },
     {
         sequelize,
-        tableName: 'tbl_gallery'
+        tableName: 'tbl_gallery_groups',
+        timestamps: true
     }
 );
 
-export default Gallery;
+export default GalleryGroup;

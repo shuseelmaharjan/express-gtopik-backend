@@ -3,12 +3,14 @@ import sequelize from '../config/database';
 
 interface CareerAttributes {
     id: number;
+    title: string;
     position: string;
     description: string;
     requirements: string;
     startsFrom: Date | null;
     endsAt: Date | null;
     isActive: boolean;
+    isPending: boolean;
     createdBy: string;
     updatedBy: string | null;
     createdAt: Date;
@@ -19,12 +21,14 @@ type CareerCreationAttributes = Optional<CareerAttributes, 'id' | 'startsFrom' |
 
 class Career extends Model<CareerAttributes, CareerCreationAttributes> implements CareerAttributes {
     public id!: number;
+    public title!: string;
     public position!: string;
     public description!: string;
     public requirements!: string;
     public startsFrom!: Date | null;
     public endsAt!: Date | null;
     public isActive!: boolean;
+    public isPending!: boolean;
     public createdBy!: string;
     public updatedBy!: string | null;
     public createdAt!: Date;
@@ -37,16 +41,20 @@ Career.init(
             autoIncrement: true,
             primaryKey: true
         },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
         position: {
             type: DataTypes.STRING,
             allowNull: false
         },
         description: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         requirements: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         startsFrom: {
@@ -58,6 +66,11 @@ Career.init(
             allowNull: true
         },
         isActive: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
+        },
+        isPending: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: true

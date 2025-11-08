@@ -34,15 +34,15 @@ AboutCompany.init(
             primaryKey: true
         },
         description: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         mission: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         vision: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT('long'),
             allowNull: false
         },
         isActive: {
@@ -72,3 +72,5 @@ AboutCompany.init(
         tableName: 'tbl_about_company'
     }
 );
+
+export default AboutCompany;

@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import fileUpload from 'express-fileupload';
 import path from 'path';
 import { DateTimeHelper } from './utils/DateTimeHelper';
+import { CareerCronJob } from './utils/CareerCronJob';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -91,6 +92,12 @@ import studentEnrollmentRoutes from './routes/studentEnrollmentRoutes';
 import bannerRoutes from './routes/bannerRoutes';
 import testimonialRoutes from './routes/testimonialRoutes';
 import principalRoutes from './routes/principalMessageRoutes';
+import aboutCompanyRoutes from './routes/aboutCompanyRoutes';
+import adsRoutes from './routes/adsRoutes';
+import downloadRoutes from './routes/downloadRoutes';
+import careerRoutes from './routes/careerRoutes';
+import galleryGroupRoutes from './routes/galleryGroupRoutes';
+import galleryRoutes from './routes/galleryRoutes';
 
 
 
@@ -109,5 +116,14 @@ app.use('/api', studentEnrollmentRoutes);
 app.use('/api', bannerRoutes);
 app.use('/api', testimonialRoutes);
 app.use('/api', principalRoutes);
+app.use('/api', aboutCompanyRoutes);
+app.use('/api', adsRoutes);
+app.use('/api', downloadRoutes);
+app.use('/api', careerRoutes);
+app.use('/api', galleryGroupRoutes);
+app.use('/api', galleryRoutes);
+
+// Initialize Career Cron Jobs
+CareerCronJob.initializeCareerCronJobs();
 
 export default app;

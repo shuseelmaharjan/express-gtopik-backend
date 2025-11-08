@@ -47,11 +47,11 @@ Ads.init(
         },
         subtitle: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         link: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         isActive: {
             type: DataTypes.BOOLEAN,
