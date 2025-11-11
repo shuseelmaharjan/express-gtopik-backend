@@ -31,13 +31,13 @@ interface LoginResponse {
       profilePicture?: string;
     };
     accessToken: string;
+    refreshToken: string;
     sessionInfo?: {
       sessionId: string;
       deviceInfo: string;
       browserInfo: string;
     };
   };
-  refreshToken?: string;
 }
 
 interface ChangePasswordResponse {
@@ -45,7 +45,7 @@ interface ChangePasswordResponse {
   message: string;
 }
 export class AuthService {
-  static async login(credentials: LoginCredentials, request?: any): Promise<LoginResponse> {
+  static async login(credentials: LoginCredentials, request?: any, clientType: string = 'browser'): Promise<LoginResponse> {
     try {
       const { identifier, password } = credentials;
 
@@ -92,7 +92,8 @@ export class AuthService {
             user.id,
             accessToken,
             request,
-            refreshToken
+            refreshToken,
+            clientType
           );
           sessionInfo = {
             sessionId: session.sessionId,
@@ -116,12 +117,12 @@ export class AuthService {
             name: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' '),
             role: user.role,
             isActive: user.isActive,
-            profilePicture: user.profilePicture
+            profilePicture: user.profilePicture ? `${process.env.SERVER_URL}${user.profilePicture}` : undefined
           },
           accessToken,
+          refreshToken,
           sessionInfo
-        },
-        refreshToken
+        }
       };
 
     } catch (error) {
@@ -271,11 +272,11 @@ export class AuthService {
             name: [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' '),
             role: user.role,
             isActive: user.isActive,
-            profilePicture: user.profilePicture
+            profilePicture: user.profilePicture ? `${process.env.SERVER_URL}${user.profilePicture}` : undefined
           },
-          accessToken: newAccessToken
-        },
-        refreshToken
+          accessToken: newAccessToken,
+          refreshToken
+        }
       };
     } catch (error) {
       console.error('Token refresh error:', error);
@@ -364,18 +365,37 @@ export class AuthService {
   }
 
   /**
-   * Logout user (invalidate tokens)
+   * Logout user (invalidate tokens and blacklist refreshToken)
    */
-  static async logout(): Promise<{ success: boolean; message: string }> {
+  static async logout(refreshToken?: string): Promise<{ success: boolean; message: string }> {
     try {
       console.log(`User logout at ${DateTimeHelper.getDateTime()}`);
 
-      // In the future, you can implement token blacklisting here
-      // For now, we'll just return success as the cookie will be cleared on client side
-      // Possible enhancements:
-      // 1. Add token to blacklist in database
-      // 2. Store active sessions in Redis
-      // 3. Add logout timestamp to user record
+      // If refreshToken is provided, invalidate the session
+      if (refreshToken) {
+        try {
+          // Find and deactivate the session associated with this refreshToken
+          const session = await UserSession.findOne({
+            where: {
+              refreshToken,
+              isActive: true
+            }
+          });
+
+          if (session) {
+            await session.update({
+              isActive: false,
+              logoutTime: new Date()
+            });
+            console.log(`Session ${session.sessionId} invalidated for user ${session.userId}`);
+          } else {
+            console.log('No active session found for the provided refresh token');
+          }
+        } catch (sessionError) {
+          console.error('Error invalidating session:', sessionError);
+          // Continue with logout even if session invalidation fails
+        }
+      }
 
       return {
         success: true,
@@ -388,6 +408,62 @@ export class AuthService {
         success: false,
         message: 'Logout failed. Please try again.'
       };
+    }
+  }
+
+  /**
+   * Validate session using refresh token
+   */
+  static async validateSession(refreshToken: string): Promise<{
+    isValid: boolean;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      name: string;
+      role: string;
+      profilePicture?: string;
+    };
+  }> {
+    try {
+      // Verify refresh token
+      const secret = process.env.JWT_REFRESH_SECRET || 'default-refresh-secret-key';
+      const decoded = jwt.verify(refreshToken, secret) as { id: number; username: string };
+
+      // Find active session with this refresh token
+      const session = await UserSession.findOne({
+        where: {
+          refreshToken,
+          isActive: true
+        }
+      });
+
+      if (!session) {
+        return { isValid: false };
+      }
+
+      // Get user details
+      const user = await User.findByPk(decoded.id);
+
+      if (!user || !user.isActive) {
+        return { isValid: false };
+      }
+
+      return {
+        isValid: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          name: `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`.trim(),
+          role: user.role,
+          profilePicture: user.profilePicture ? `${process.env.SERVER_URL}${user.profilePicture}` : undefined
+        }
+      };
+
+    } catch (error) {
+      console.error('Validate session error:', error);
+      return { isValid: false };
     }
   }
 }

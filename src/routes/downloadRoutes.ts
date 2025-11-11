@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new download
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/downloads', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, DownloadController.createDownload);
+router.post('/v1/downloads', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, DownloadController.createDownload);
 
 /**
  * @route GET /api/v1/downloads/active
@@ -23,7 +23,7 @@ router.get('/v1/downloads/active', DownloadController.getAllActiveDownloads);
  * @desc Get all downloads (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/downloads', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, DownloadController.getAllDownloads);
+router.get('/v1/downloads', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, DownloadController.getAllDownloads);
 
 /**
  * @route GET /api/v1/downloads/type/:fileType
@@ -44,20 +44,20 @@ router.get('/v1/downloads/:id', DownloadController.getDownloadById);
  * @desc Update download details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/downloads/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, DownloadController.updateDownload);
+router.put('/v1/downloads/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, DownloadController.updateDownload);
 
 /**
  * @route DELETE /api/v1/downloads/:id
  * @desc Deactivate/soft delete download
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/downloads/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, DownloadController.deactivateDownload);
+router.delete('/v1/downloads/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, DownloadController.deactivateDownload);
 
 /**
  * @route DELETE /api/v1/downloads/:id/permanent
  * @desc Permanently delete download
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/downloads/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, DownloadController.deleteDownload);
+router.delete('/v1/downloads/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, DownloadController.deleteDownload);
 
 export default router;

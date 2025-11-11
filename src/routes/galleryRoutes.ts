@@ -10,7 +10,7 @@ const router = express.Router();
  * @access Private (Admin/SuperAdmin)
  * @body imageGroupId: number, images: File[]
  */
-router.post('/v1/gallery/upload', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryController.uploadGalleryImages);
+router.post('/v1/gallery/upload', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryController.uploadGalleryImages);
 
 /**
  * @route GET /api/v1/gallery
@@ -38,7 +38,7 @@ router.get('/v1/gallery/:id', GalleryController.getGalleryImageById);
  * @desc Delete a single gallery image
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/gallery/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryController.deleteGalleryImage);
+router.delete('/v1/gallery/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryController.deleteGalleryImage);
 
 /**
  * @route DELETE /api/v1/gallery/bulk-delete
@@ -46,6 +46,6 @@ router.delete('/v1/gallery/:id', AuthMiddleware.authenticateToken, AuthMiddlewar
  * @access Private (Admin/SuperAdmin)
  * @body ids: number[]
  */
-router.delete('/v1/gallery/bulk-delete', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryController.deleteMultipleGalleryImages);
+router.delete('/v1/gallery/bulk-delete', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryController.deleteMultipleGalleryImages);
 
 export default router;

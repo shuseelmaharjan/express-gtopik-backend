@@ -24,6 +24,8 @@ export class AuthController {
       }
 
       const { identifier, password } = req.body;
+      const clientType = req.headers['x-client-type'] as string || 'browser'; // browser, android, ios
+      
       if (
         !identifier || !password ||
         typeof identifier !== "string" || typeof password !== "string" ||
@@ -38,30 +40,42 @@ export class AuthController {
       const result = await AuthService.login({
         identifier: identifier.trim(),
         password: password.trim()
-      }, req);
+      }, req, clientType);
 
-      if (result.success && result.refreshToken) {
-        res.cookie('refreshToken', result.refreshToken, {
+      if (result.success && result.data?.accessToken && result.data?.refreshToken) {
+        // Set refreshToken in httpOnly cookie (15 days)
+        res.cookie('refreshToken', result.data.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           maxAge: 15 * 24 * 60 * 60 * 1000,
           path: '/'
         });
-        res.cookie("session", true,{
+
+        // Set accessToken in httpOnly cookie (3 hours)
+        res.cookie('accessToken', result.data.accessToken, {
           httpOnly: false,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
-          maxAge: 15 * 24 * 60 * 60 * 1000,
+          maxAge: 3 * 60 * 60 * 1000, // 3 hours
           path: '/'
-        } )
+        });
 
-        const { refreshToken, ...responseWithoutRefreshToken } = result;
-        const statusCode = result.success ? 200 : 401;
-        res.status(statusCode).json(responseWithoutRefreshToken);
+        // Return only user data, no tokens
+        res.status(200).json({
+          success: true,
+          message: result.message,
+          data: {
+            user: result.data.user
+          }
+        });
       } else {
+        // Login failed
         const statusCode = result.success ? 200 : 401;
-        res.status(statusCode).json(result);
+        res.status(statusCode).json({
+          success: result.success,
+          message: result.message
+        });
       }
     } catch (error) {
       console.error('Login controller error:', error);
@@ -74,10 +88,8 @@ export class AuthController {
   }
 
   static async refreshToken(req: Request, res: Response): Promise<void> {
-    // console.log("Cookie received:", req.cookies);
     try {
       const refreshToken = req.cookies?.refreshToken;
-      // console.log('Received refresh token:', refreshToken);
 
       if (!refreshToken || typeof refreshToken !== 'string' || refreshToken.trim() === '') {
         res.status(400).json({
@@ -87,10 +99,11 @@ export class AuthController {
         return;
       }
 
-  const result = await AuthService.refreshAccessToken(refreshToken.trim(), req);
+      const result = await AuthService.refreshAccessToken(refreshToken.trim(), req);
 
-      if (result.success && result.refreshToken) {
-        res.cookie('refreshToken', result.refreshToken, {
+      if (result.success && result.data?.accessToken && result.data?.refreshToken) {
+        // Update refreshToken cookie (15 days)
+        res.cookie('refreshToken', result.data.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -98,12 +111,29 @@ export class AuthController {
           path: '/'
         });
 
-        const { refreshToken: _, ...responseWithoutRefreshToken } = result;
-        const statusCode = result.success ? 200 : 401;
-        res.status(statusCode).json(responseWithoutRefreshToken);
+        // Update accessToken cookie (3 hours)
+        res.cookie('accessToken', result.data.accessToken, {
+          httpOnly: false,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 3 * 60 * 60 * 1000, // 3 hours
+          path: '/'
+        });
+
+        // Return only user data, no tokens
+        res.status(200).json({
+          success: true,
+          message: result.message,
+          data: {
+            user: result.data.user
+          }
+        });
       } else {
         const statusCode = result.success ? 200 : 401;
-        res.status(statusCode).json(result);
+        res.status(statusCode).json({
+          success: result.success,
+          message: result.message
+        });
       }
 
     } catch (error) {
@@ -119,9 +149,13 @@ export class AuthController {
     try {
       console.log('Logout attempt received');
 
-      const result = await AuthService.logout();
+      // Get refreshToken from cookies
+      const refreshToken = req.cookies?.refreshToken;
+
+      const result = await AuthService.logout(refreshToken);
 
       if (result.success) {
+        // Clear refreshToken cookie
         res.clearCookie('refreshToken', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -129,7 +163,15 @@ export class AuthController {
           path: '/'
         });
 
-        console.log('Refresh token cookie cleared');
+        // Clear accessToken cookie
+        res.clearCookie('accessToken', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/'
+        });
+
+        console.log('Cookies cleared and session invalidated');
       }
       const statusCode = result.success ? 200 : 500;
       res.status(statusCode).json(result);
@@ -209,6 +251,37 @@ export class AuthController {
       res.status(500).json({
         success: false,
         message: 'Internal server error'
+      });
+    }
+  }
+
+  static async whoIsMe(req: Request, res: Response): Promise<void> {
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+
+      if (!refreshToken) {
+        res.status(200).json({
+          success: true,
+          session: false,
+          message: 'No active session found'
+        });
+        return;
+      }
+
+      const result = await AuthService.validateSession(refreshToken);
+
+      res.status(200).json({
+        success: true,
+        session: result.isValid,
+        message: result.isValid ? 'Active session found' : 'Session expired or invalid',
+        data: result.isValid ? result.user : undefined
+      });
+    } catch (error) {
+      console.error('Who is me controller error:', error);
+      res.status(200).json({
+        success: true,
+        session: false,
+        message: 'No active session found'
       });
     }
   }

@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new banner
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/banners', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, BannerController.createBanner);
+router.post('/v1/banners', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, BannerController.createBanner);
 
 /**
  * @route GET /api/v1/banners/active
@@ -23,7 +23,7 @@ router.get('/v1/banners/active', BannerController.getAllActiveBanners);
  * @desc Get all banners (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/banners', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, BannerController.getAllBanners);
+router.get('/v1/banners', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, BannerController.getAllBanners);
 
 /**
  * @route GET /api/v1/banners/:id
@@ -37,20 +37,20 @@ router.get('/v1/banners/:id', BannerController.getBannerById);
  * @desc Update banner details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/banners/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, BannerController.updateBanner);
+router.put('/v1/banners/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, BannerController.updateBanner);
 
 /**
  * @route DELETE /api/v1/banners/:id
  * @desc Deactivate/soft delete banner
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/banners/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, BannerController.deactivateBanner);
+router.delete('/v1/banners/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, BannerController.deactivateBanner);
 
 /**
  * @route DELETE /api/v1/banners/:id/permanent
  * @desc Permanently delete banner
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/banners/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, BannerController.deleteBanner);
+router.delete('/v1/banners/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, BannerController.deleteBanner);
 
 export default router;

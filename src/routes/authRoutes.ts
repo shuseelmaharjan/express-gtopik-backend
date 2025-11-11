@@ -34,6 +34,13 @@ router.post('/logout', AuthController.logout);
  * @access Private (requires valid access token)
  * @body { currentPassword: string, newPassword: string, confirmPassword: string }
  */
-router.post('/change-password', AuthMiddleware.authenticateToken, AuthController.changePassword);
+router.post('/change-password', AuthMiddleware.authenticateToken(), AuthController.changePassword);
+
+/**
+ * @route GET /api/auth/who-is-me
+ * @desc Check if user has an active session
+ * @access Public (checks refresh token cookie)
+ */
+router.get('/v1/who-is-me', AuthController.whoIsMe);
 
 export default router;

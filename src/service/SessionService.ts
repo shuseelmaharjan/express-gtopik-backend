@@ -58,7 +58,7 @@ export class SessionService {
     }
 
     // Create a new session
-    static async createSession(userId: number, accessToken: string, request: any, refreshToken?: string) {
+    static async createSession(userId: number, accessToken: string, request: any, refreshToken?: string, clientType: string = 'browser') {
         try {
             const sessionId = this.generateSessionId();
             const userAgent = request.headers['user-agent'] || '';
@@ -67,7 +67,20 @@ export class SessionService {
             // Parse user agent
             const parsed = this.parseUserAgent(userAgent);
             
-            const { deviceType, deviceInfo, browserInfo, platform } = parsed;
+            let { deviceType, deviceInfo, browserInfo, platform } = parsed;
+
+            // Override deviceType based on clientType header if provided
+            if (clientType === 'android') {
+                deviceType = 'mobile';
+                platform = 'android';
+                deviceInfo = 'Android App';
+            } else if (clientType === 'ios') {
+                deviceType = 'mobile';
+                platform = 'ios';
+                deviceInfo = 'iOS App';
+            } else if (clientType === 'browser') {
+                // Keep the parsed values from user agent
+            }
 
             const session = await UserSession.create({
                 userId,

@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new gallery group
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/gallery-groups', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryGroupController.createGalleryGroup);
+router.post('/v1/gallery-groups', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryGroupController.createGalleryGroup);
 
 /**
  * @route GET /api/v1/gallery-groups/active
@@ -23,7 +23,7 @@ router.get('/v1/gallery-groups/active', GalleryGroupController.getAllActiveGalle
  * @desc Get all gallery groups (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/gallery-groups', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryGroupController.getAllGalleryGroups);
+router.get('/v1/gallery-groups', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryGroupController.getAllGalleryGroups);
 
 /**
  * @route GET /api/v1/gallery-groups/:id
@@ -37,20 +37,20 @@ router.get('/v1/gallery-groups/:id', GalleryGroupController.getGalleryGroupById)
  * @desc Update gallery group details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/gallery-groups/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryGroupController.updateGalleryGroup);
+router.put('/v1/gallery-groups/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryGroupController.updateGalleryGroup);
 
 /**
  * @route DELETE /api/v1/gallery-groups/:id
  * @desc Deactivate/soft delete gallery group
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/gallery-groups/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryGroupController.deactivateGalleryGroup);
+router.delete('/v1/gallery-groups/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryGroupController.deactivateGalleryGroup);
 
 /**
  * @route DELETE /api/v1/gallery-groups/:id/permanent
  * @desc Permanently delete gallery group
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/gallery-groups/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, GalleryGroupController.deleteGalleryGroup);
+router.delete('/v1/gallery-groups/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, GalleryGroupController.deleteGalleryGroup);
 
 export default router;

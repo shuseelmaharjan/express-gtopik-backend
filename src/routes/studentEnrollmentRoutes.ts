@@ -9,6 +9,6 @@ const router = express.Router();
  * @desc Create a new student enrollment
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/student-enrollments', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, StudentEnrollmentController.createStudentEnrollment);
+router.post('/v1/student-enrollments', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, StudentEnrollmentController.createStudentEnrollment);
 
 export default router;

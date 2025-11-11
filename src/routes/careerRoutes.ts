@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new career
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/careers', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.createCareer);
+router.post('/v1/careers', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.createCareer);
 
 /**
  * @route GET /api/v1/careers/active
@@ -30,7 +30,7 @@ router.get('/v1/careers/pending', CareerController.getPendingCareers);
  * @desc Get all careers (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/careers', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.getAllCareers);
+router.get('/v1/careers', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.getAllCareers);
 
 /**
  * @route GET /api/v1/careers/:id
@@ -44,27 +44,27 @@ router.get('/v1/careers/:id', CareerController.getCareerById);
  * @desc Update career details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/careers/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.updateCareer);
+router.put('/v1/careers/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.updateCareer);
 
 /**
  * @route DELETE /api/v1/careers/:id
  * @desc Deactivate/soft delete career
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/careers/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.deactivateCareer);
+router.delete('/v1/careers/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.deactivateCareer);
 
 /**
  * @route DELETE /api/v1/careers/:id/permanent
  * @desc Permanently delete career
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/careers/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.deleteCareer);
+router.delete('/v1/careers/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.deleteCareer);
 
 /**
  * @route POST /api/v1/careers/update-statuses
  * @desc Manually trigger career status updates (admin endpoint)
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/careers/update-statuses', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, CareerController.updateCareerStatuses);
+router.post('/v1/careers/update-statuses', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, CareerController.updateCareerStatuses);
 
 export default router;

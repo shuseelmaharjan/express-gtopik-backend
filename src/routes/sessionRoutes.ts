@@ -5,7 +5,7 @@ import { AuthMiddleware } from '../middleware/AuthMiddleware';
 const router = Router();
 
 // All session routes require authentication
-router.use(AuthMiddleware.authenticateToken);
+router.use(AuthMiddleware.authenticateToken());
 
 // Get all active sessions for the logged-in user
 router.get('/sessions', SessionController.getUserSessions);

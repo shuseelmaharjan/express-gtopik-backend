@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new principal message
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/principal-message', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, PrincipalMessageController.createPrincipalMessage);
+router.post('/v1/principal-message', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, PrincipalMessageController.createPrincipalMessage);
 
 /**
  * @route GET /api/v1/principal-message
@@ -23,13 +23,13 @@ router.get('/v1/principal-message', PrincipalMessageController.getPrincipalMessa
  * @desc Update principal message
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/principal-message/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, PrincipalMessageController.updatePrincipalMessage);
+router.put('/v1/principal-message/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, PrincipalMessageController.updatePrincipalMessage);
 
 /**
  * @route DELETE /api/v1/principal-message/:id
  * @desc Hard delete principal message
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/principal-message/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, PrincipalMessageController.deletePrincipalMessage);
+router.delete('/v1/principal-message/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, PrincipalMessageController.deletePrincipalMessage);
 
 export default router;

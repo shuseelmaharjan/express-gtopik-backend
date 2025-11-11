@@ -58,6 +58,21 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Cookie parser middleware
 app.use(cookieParser());
 
+// Response interceptor to log Set-Cookie headers (for debugging)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const originalJson = res.json.bind(res);
+  
+  res.json = function(body: any) {
+    const cookies = res.getHeader('Set-Cookie');
+    if (cookies) {
+      console.log('🍪 Response includes Set-Cookie header:', cookies);
+    }
+    return originalJson(body);
+  };
+  
+  next();
+});
+
 //Routes
 app.get('/', (req, res) => {
   res.send('Hello World!');

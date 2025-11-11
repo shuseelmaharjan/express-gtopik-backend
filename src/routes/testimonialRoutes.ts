@@ -9,21 +9,21 @@ const router = express.Router();
  * @desc Create a new testimonial
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/testimonials', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, TestimonialController.createTestimonial);
+router.post('/v1/testimonials', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, TestimonialController.createTestimonial);
 
 /**
  * @route GET /api/v1/testimonials/active
  * @desc Get all active testimonials
- * @access Public
+ * @access Public (with optional token refresh)
  */
-router.get('/v1/testimonials/active', TestimonialController.getAllActiveTestimonials);
+router.get('/v1/testimonials/active', AuthMiddleware.authenticateToken(), TestimonialController.getAllActiveTestimonials);
 
 /**
  * @route GET /api/v1/testimonials
  * @desc Get all testimonials (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/testimonials', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, TestimonialController.getAllTestimonials);
+router.get('/v1/testimonials', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, TestimonialController.getAllTestimonials);
 
 /**
  * @route GET /api/v1/testimonials/:id
@@ -37,20 +37,20 @@ router.get('/v1/testimonials/:id', TestimonialController.getTestimonialById);
  * @desc Update testimonial details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/testimonials/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, TestimonialController.updateTestimonial);
+router.put('/v1/testimonials/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, TestimonialController.updateTestimonial);
 
 /**
  * @route DELETE /api/v1/testimonials/:id
  * @desc Deactivate/soft delete testimonial
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/testimonials/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, TestimonialController.deactivateTestimonial);
+router.delete('/v1/testimonials/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, TestimonialController.deactivateTestimonial);
 
 /**
  * @route DELETE /api/v1/testimonials/:id/permanent
  * @desc Permanently delete testimonial
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/testimonials/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, TestimonialController.deleteTestimonial);
+router.delete('/v1/testimonials/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, TestimonialController.deleteTestimonial);
 
 export default router;

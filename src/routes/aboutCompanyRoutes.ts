@@ -9,7 +9,7 @@ const router = express.Router();
  * @desc Create a new about company record
  * @access Private (Admin/SuperAdmin)
  */
-router.post('/v1/about-company', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, AboutCompanyController.createAboutCompany);
+router.post('/v1/about-company', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, AboutCompanyController.createAboutCompany);
 
 /**
  * @route GET /api/v1/about-company/active
@@ -23,7 +23,7 @@ router.get('/v1/about-company/active', AboutCompanyController.getAllActiveAboutC
  * @desc Get all about company records (including inactive)
  * @access Private (Admin/SuperAdmin)
  */
-router.get('/v1/about-company', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, AboutCompanyController.getAllAboutCompany);
+router.get('/v1/about-company', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, AboutCompanyController.getAllAboutCompany);
 
 /**
  * @route GET /api/v1/about-company/:id
@@ -37,20 +37,20 @@ router.get('/v1/about-company/:id', AboutCompanyController.getAboutCompanyById);
  * @desc Update about company details
  * @access Private (Admin/SuperAdmin)
  */
-router.put('/v1/about-company/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, AboutCompanyController.updateAboutCompany);
+router.put('/v1/about-company/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, AboutCompanyController.updateAboutCompany);
 
 /**
  * @route DELETE /api/v1/about-company/:id
  * @desc Deactivate/soft delete about company
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/about-company/:id', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, AboutCompanyController.deactivateAboutCompany);
+router.delete('/v1/about-company/:id', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, AboutCompanyController.deactivateAboutCompany);
 
 /**
  * @route DELETE /api/v1/about-company/:id/permanent
  * @desc Permanently delete about company
  * @access Private (Admin/SuperAdmin)
  */
-router.delete('/v1/about-company/:id/permanent', AuthMiddleware.authenticateToken, AuthMiddleware.requireAdminstration, AboutCompanyController.deleteAboutCompany);
+router.delete('/v1/about-company/:id/permanent', AuthMiddleware.authenticateToken(), AuthMiddleware.requireAdminstration, AboutCompanyController.deleteAboutCompany);
 
 export default router;

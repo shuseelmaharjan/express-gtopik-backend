@@ -12,7 +12,7 @@ const router = express.Router();
  * @body { facultyName: string }
  */
 router.post('/v1/faculty', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin, 
     FacultyController.createFaculty
 );
@@ -36,7 +36,7 @@ router.get('/v1/faculty',
  * @param id Faculty ID
  */
 router.get('/v1/faculty/:id', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     FacultyController.getFacultyById
 );
 
@@ -49,7 +49,7 @@ router.get('/v1/faculty/:id',
  * @body { facultyName: string }
  */
 router.put('/v1/faculty/:id/name', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin, 
     FacultyController.updateFacultyName
 );
@@ -63,7 +63,7 @@ router.put('/v1/faculty/:id/name',
  * @body { isActive: boolean }
  */
 router.put('/v1/faculty/:id/status', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin, 
     FacultyController.updateFacultyStatus
 );

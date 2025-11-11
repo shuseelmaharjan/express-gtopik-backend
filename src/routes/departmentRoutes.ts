@@ -19,7 +19,7 @@ router.get(
 // Create new department - requires admin/superadmin role
 router.post(
     '/v1/departments', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin,  
     DepartmentController.createDepartment
 );
@@ -27,7 +27,7 @@ router.post(
 // Update department name - requires admin/superadmin role
 router.put(
     '/v1/department/:id/update',
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin, 
     DepartmentController.updateDepartmentName
 );
@@ -35,7 +35,7 @@ router.put(
 // Update department status (activate/deactivate) - requires admin/superadmin role
 router.put(
     '/v1/:id/status', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdmin, 
     DepartmentController.updateDepartmentStatus
 );
@@ -43,7 +43,7 @@ router.put(
 // Get departments by faculty ID - requires admin/superadmin role
 router.get(
     '/v1/departmentsfaculty/:facultyId', 
-    AuthMiddleware.authenticateToken, 
+    AuthMiddleware.authenticateToken(), 
     AuthMiddleware.requireAdminstration, 
     DepartmentController.getDepartmentsByFacultyId
 );
