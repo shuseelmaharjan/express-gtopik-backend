@@ -113,6 +113,7 @@ import downloadRoutes from './routes/downloadRoutes';
 import careerRoutes from './routes/careerRoutes';
 import galleryGroupRoutes from './routes/galleryGroupRoutes';
 import galleryRoutes from './routes/galleryRoutes';
+import billingRoutes from './routes/billingRoutes';
 
 
 
@@ -137,6 +138,7 @@ app.use('/api', downloadRoutes);
 app.use('/api', careerRoutes);
 app.use('/api', galleryGroupRoutes);
 app.use('/api', galleryRoutes);
+app.use('/api', billingRoutes);
 
 // Initialize Career Cron Jobs
 CareerCronJob.initializeCareerCronJobs();

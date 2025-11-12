@@ -423,6 +423,7 @@ export class AuthService {
       name: string;
       role: string;
       profilePicture?: string;
+      isActive: boolean;
     };
   }> {
     try {
@@ -457,6 +458,7 @@ export class AuthService {
           email: user.email,
           name: `${user.firstName} ${user.middleName ? user.middleName + ' ' : ''}${user.lastName}`.trim(),
           role: user.role,
+          isActive: user.isActive,
           profilePicture: user.profilePicture ? `${process.env.SERVER_URL}${user.profilePicture}` : undefined
         }
       };
