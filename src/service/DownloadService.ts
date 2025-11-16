@@ -264,5 +264,6 @@ class DownloadService {
     }
 }
 
+
 const downloadService = new DownloadService();
 export default downloadService;

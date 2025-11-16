@@ -65,7 +65,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.json = function(body: any) {
     const cookies = res.getHeader('Set-Cookie');
     if (cookies) {
-      console.log('🍪 Response includes Set-Cookie header:', cookies);
+      console.log('Response includes Set-Cookie header:', cookies);
     }
     return originalJson(body);
   };
@@ -87,9 +87,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Serve uploaded profile images statically
-const uploadDir = path.join(__dirname, 'uploads');
-app.use('/uploads', express.static(uploadDir));
+// Serve uploaded files statically from a stable base dir
+const uploadsBase = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
+app.use('/uploads', express.static(uploadsBase));
 
 
 // Import routes
@@ -114,6 +114,7 @@ import careerRoutes from './routes/careerRoutes';
 import galleryGroupRoutes from './routes/galleryGroupRoutes';
 import galleryRoutes from './routes/galleryRoutes';
 import billingRoutes from './routes/billingRoutes';
+import organizationRoutes from './routes/organizationRoutes';
 
 
 
@@ -139,6 +140,7 @@ app.use('/api', careerRoutes);
 app.use('/api', galleryGroupRoutes);
 app.use('/api', galleryRoutes);
 app.use('/api', billingRoutes);
+app.use('/api', organizationRoutes);
 
 // Initialize Career Cron Jobs
 CareerCronJob.initializeCareerCronJobs();

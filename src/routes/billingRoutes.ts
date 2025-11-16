@@ -28,4 +28,26 @@ router.post(
     BillingController.createBilling
 );
 
+/**
+ * @route GET /api/v1/billing/:id
+ * @desc Get billing record by ID with amount in words
+ * @access Private (Admin/SuperAdmin/Staff)
+ */
+router.get(
+    '/v1/billing/:id',
+    AuthMiddleware.authenticateToken(),
+    AuthMiddleware.requireAdminstration,
+    BillingController.getBillingById
+);
+
+/**
+ * @route GET /api/v1/billing/:id/pdf
+ * @desc Download billing invoice as PDF
+ * @access Private (Admin/SuperAdmin/Staff)
+ */
+router.get(
+    '/v1/billing/:id/pdf',
+    BillingController.downloadBillingPDF
+);
+
 export default router;

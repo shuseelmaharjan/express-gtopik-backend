@@ -23,6 +23,19 @@ FROM node:18-alpine AS production
 ENV TZ="Asia/Kathmandu"
 ENV NODE_ENV=production
 
+# Install Chromium and its dependencies for Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Set Puppeteer to use installed Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /usr/src/app
 
 # Create non-root user for security

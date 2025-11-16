@@ -165,6 +165,7 @@ export class AuthMiddleware {
         });
         return;
       }
+      console.log('Authorizing user with role:', req.user.role);
 
       if (!allowedRoles.includes(req.user.role)) {
         res.status(403).json({

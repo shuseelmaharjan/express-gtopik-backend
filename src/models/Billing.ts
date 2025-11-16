@@ -3,10 +3,12 @@ import sequelize from '../config/database';
 
 interface BillingAttributes{
     id: number;
+    billId: string;
     userId: number;
     amount: number;
-    currency: string;
-    billingType: 'advance' | 'regular';
+    currency: 'npr';
+    paymentType: 'cash_on_hand' | 'fonepay' | 'esewa' | 'khalti';
+    billingType: 'advance' | 'partial';
     remark: string | null;
     createdBy: string;
     updatedBy: string | null;
@@ -15,14 +17,16 @@ interface BillingAttributes{
     updatedAt: Date | null;
 }
 
-interface BillingCreationAttributes extends Optional<BillingAttributes, 'id' | 'remark' | 'updatedBy' | 'updatedRemark' | 'createdAt' | 'updatedAt'> {}
+interface BillingCreationAttributes extends Optional<BillingAttributes, 'id' | 'billId' | 'remark' | 'updatedBy' | 'updatedRemark' | 'createdAt' | 'updatedAt'> {}
 
 class Billing extends Model<BillingAttributes, BillingCreationAttributes> implements BillingAttributes {
     public id!: number;
+    public billId!: string;
     public userId!: number;
     public amount!: number;
-    public currency!: string;
-    public billingType!: 'advance' | 'regular';
+    public currency!: 'npr';
+    public paymentType!: 'cash_on_hand' | 'fonepay' | 'esewa' | 'khalti';
+    public billingType!: 'advance' | 'partial';
     public remark!: string | null;
     public createdBy!: string;
     public updatedBy!: string | null;
@@ -38,6 +42,11 @@ Billing.init(
             autoIncrement: true,
             primaryKey: true
         },
+        billId: {
+            type: DataTypes.STRING(50),
+            allowNull: false,
+            unique: true
+        },
         userId: {
             type: DataTypes.INTEGER.UNSIGNED,
             allowNull: false
@@ -50,17 +59,27 @@ Billing.init(
             }
         },
         currency: {
-            type: DataTypes.STRING(10),
+            type: DataTypes.ENUM('npr'),
             allowNull: false,
-            defaultValue: 'NPR'
+            defaultValue: 'npr'
         },
-        billingType: {
-            type: DataTypes.ENUM('advance', 'regular'),
+        paymentType: {
+            type: DataTypes.ENUM('cash_on_hand', 'fonepay', 'esewa', 'khalti'),
             allowNull: false,
             validate: {
                 isIn: {
-                    args: [['advance', 'regular']],
-                    msg: "Billing type must be either 'advance' or 'regular'"
+                    args: [['cash_on_hand', 'fonepay', 'esewa', 'khalti']],
+                    msg: "Payment type must be 'cash_on_hand', 'fonepay', 'esewa', or 'khalti'"
+                }
+            }
+        },
+        billingType: {
+            type: DataTypes.ENUM('advance', 'partial'),
+            allowNull: false,
+            validate: {
+                isIn: {
+                    args: [['advance', 'partial']],
+                    msg: "Billing type must be either 'advance' or 'partial'"
                 }
             }
         },
