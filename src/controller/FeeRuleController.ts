@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import FeeRuleService from '../service/FeeRuleService';
 import UidHelper from '../utils/uidHelper';
-import { parse } from 'path';
 
 class FeeRuleController {
     /**

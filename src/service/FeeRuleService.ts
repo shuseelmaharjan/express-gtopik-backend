@@ -1,5 +1,4 @@
 import FeeRule from '../models/FeeCategory';
-import { UserHelper } from '../utils/userHelper';
 
 interface CreateFeeRuleData {
     name: string;

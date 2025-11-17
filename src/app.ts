@@ -116,6 +116,7 @@ import galleryRoutes from './routes/galleryRoutes';
 import billingRoutes from './routes/billingRoutes';
 import organizationRoutes from './routes/organizationRoutes';
 import feeRuleRoutes from './routes/feeRuleRoutes';
+import extraFeesRoutes from './routes/extraFeesRoutes';
 
 
 
@@ -143,6 +144,7 @@ app.use('/api', galleryRoutes);
 app.use('/api', billingRoutes);
 app.use('/api', organizationRoutes);
 app.use('/api', feeRuleRoutes);
+app.use('/api', extraFeesRoutes);
 
 // Initialize Career Cron Jobs
 CareerCronJob.initializeCareerCronJobs();
