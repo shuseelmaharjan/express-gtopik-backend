@@ -23,7 +23,7 @@ const startServer = async () => {
     // - Use 'alter: true' only in development to update table structure
     await sequelize.sync({ 
       force: false,  // Never drop tables
-      alter: false   // Set to true only in development to update table structure
+      alter: true   // Set to true only in development to update table structure
     });
 
     console.log('Database synchronized successfully');

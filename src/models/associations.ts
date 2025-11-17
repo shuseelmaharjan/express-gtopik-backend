@@ -11,6 +11,7 @@ import CourseCost from './CourseCost';
 import StudentEnrollment from './StudentEnrollment';
 import Gallery from './Gallery';
 import GalleryGroup from './GalleryGroup';
+import FeeRule from './FeeCategory';
 
 // Faculty - Department associations
 Faculty.hasMany(Department, {
@@ -162,6 +163,17 @@ Gallery.belongsTo(GalleryGroup, {
   as: 'galleryGroup'
 });
 
+// FeeRule associations - only section_id needed due to hierarchy
+FeeRule.belongsTo(ClassSection, {
+  foreignKey: 'section_id',
+  as: 'section'
+});
+
+ClassSection.hasMany(FeeRule, {
+  foreignKey: 'section_id',
+  as: 'feeRules'
+});
+
 // You can add more associations here as needed
 // For example, if you have other relationships:
 // Faculty.hasMany(User, { foreignKey: 'facultyId', as: 'users' });
@@ -180,5 +192,6 @@ export {
   CourseCost,
   StudentEnrollment,
   Gallery,
-  GalleryGroup
+  GalleryGroup,
+  FeeRule
 };
